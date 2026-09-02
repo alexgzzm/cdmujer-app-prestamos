@@ -1,0 +1,9 @@
+{
+  "name": "CD Mujer",
+  "short_name": "CD Mujer",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#00695C",
+  "description": "Aplicación de gestión de préstamos de CD Mujer."
+}

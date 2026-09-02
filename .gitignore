@@ -137,6 +137,21 @@ dist
 !.yarn/sdks
 !.yarn/versions
 
+# Flutter and Dart
+.dart_tool/
+.packages
+.pub/
+build/
+
+# Flutter platform tooling
+android/.gradle/
+android/local.properties
+ios/Pods/
+ios/.symlinks/
+macos/Flutter/ephemeral/
+linux/flutter/ephemeral/
+windows/flutter/ephemeral/
+
 # Vite files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*

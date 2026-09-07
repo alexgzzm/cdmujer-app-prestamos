@@ -30,9 +30,15 @@ class SessionDrawer extends ConsumerWidget {
               ),
             ),
             accountName: Text(session?.user.name ?? 'Usuario'),
-            accountEmail: Text(
-              session == null ? 'Rol: --' : 'Rol: ${session.user.roleId}',
-            ),
+            accountEmail: Text(session?.user.username ?? 'Usuario'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.home_outlined),
+            title: const Text('Inicio'),
+            onTap: () {
+              Navigator.of(context).pop();
+              context.go('/home');
+            },
           ),
           ListTile(
             leading: const Icon(Icons.logout),

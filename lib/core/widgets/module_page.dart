@@ -7,11 +7,8 @@ class ModulePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Text(title, style: Theme.of(context).textTheme.headlineMedium),
-      ),
+    return Center(
+      child: Text(title, style: Theme.of(context).textTheme.headlineMedium),
     );
   }
 }

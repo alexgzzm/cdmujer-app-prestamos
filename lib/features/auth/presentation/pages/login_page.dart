@@ -1,4 +1,5 @@
 import 'package:cdmujer_app_prestamos/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:cdmujer_app_prestamos/features/auth/domain/entities/auth_session.dart';
 import 'package:cdmujer_app_prestamos/features/auth/presentation/providers/auth_providers.dart';
 import 'package:cdmujer_app_prestamos/features/auth/presentation/widgets/login_logo.dart';
 import 'package:flutter/material.dart';
@@ -27,12 +28,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AsyncValue<void>>(loginControllerProvider, (previous, next) {
-      if (previous is AsyncLoading<void> && next is AsyncData<void>) {
+    ref.listen<AsyncValue<AuthSession?>>(authControllerProvider,
+        (previous, next) {
+      if (previous is AsyncLoading<AuthSession?> &&
+          next is AsyncData<AuthSession?> &&
+          next.value != null) {
         context.go('/home');
       }
 
-      if (previous is AsyncLoading<void> && next.hasError) {
+      if (previous is AsyncLoading<AuthSession?> && next.hasError) {
         final Object error = next.error!;
         final String message = error is AuthException
             ? error.message
@@ -55,7 +59,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       }
     });
 
-    final AsyncValue<void> loginState = ref.watch(loginControllerProvider);
+    final AsyncValue<AuthSession?> loginState =
+        ref.watch(authControllerProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -142,7 +147,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       return;
     }
 
-    ref.read(loginControllerProvider.notifier).signIn(
+    ref.read(authControllerProvider.notifier).signIn(
           username: _usernameController.text.trim(),
           password: _passwordController.text,
         );

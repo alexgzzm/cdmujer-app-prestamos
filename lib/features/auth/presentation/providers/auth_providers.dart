@@ -20,23 +20,38 @@ final Provider<AuthRepository> authRepositoryProvider =
   );
 });
 
-final AsyncNotifierProvider<LoginController, void> loginControllerProvider =
-    AsyncNotifierProvider<LoginController, void>(LoginController.new);
+final AsyncNotifierProvider<AuthController, AuthSession?>
+    authControllerProvider =
+    AsyncNotifierProvider<AuthController, AuthSession?>(AuthController.new);
 
-class LoginController extends AsyncNotifier<void> {
+class AuthController extends AsyncNotifier<AuthSession?> {
   @override
-  Future<void> build() async {}
+  Future<AuthSession?> build() {
+    return ref.read(authRepositoryProvider).readSession();
+  }
 
   Future<void> signIn({
     required String username,
     required String password,
   }) async {
-    state = const AsyncLoading<void>();
-    state = await AsyncValue.guard(() async {
-      await ref.read(authRepositoryProvider).signIn(
+    state = const AsyncLoading<AuthSession?>();
+    state = await AsyncValue.guard<AuthSession?>(
+      () => ref.read(authRepositoryProvider).signIn(
             username: username,
             password: password,
-          );
-    });
+          ),
+    );
+  }
+
+  Future<bool> signOut() async {
+    state = const AsyncLoading<AuthSession?>();
+    try {
+      await ref.read(authRepositoryProvider).signOut();
+      state = const AsyncData<AuthSession?>(null);
+      return true;
+    } on Object catch (error, stackTrace) {
+      state = AsyncError<AuthSession?>(error, stackTrace);
+      return false;
+    }
   }
 }

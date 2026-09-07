@@ -14,6 +14,9 @@ class AuthRepositoryImpl implements AuthRepository {
   final SessionLocalDataSource _localDataSource;
 
   @override
+  Future<AuthSession?> readSession() => _localDataSource.read();
+
+  @override
   Future<AuthSession> signIn({
     required String username,
     required String password,
@@ -25,4 +28,7 @@ class AuthRepositoryImpl implements AuthRepository {
     await _localDataSource.save(session);
     return session;
   }
+
+  @override
+  Future<void> signOut() => _localDataSource.clear();
 }

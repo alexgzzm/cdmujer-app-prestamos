@@ -1,9 +1,7 @@
+import 'package:cdmujer_app_prestamos/app/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 abstract final class AppTheme {
-  static const Color _brandColor = Color(0xFFB6144B);
-  static const Color _onBrandColor = Colors.white;
-
   static ThemeData get lightTheme => _theme(Brightness.light);
 
   // Se declara desde ahora para facilitar la futura incorporación del selector.
@@ -11,11 +9,11 @@ abstract final class AppTheme {
 
   static ThemeData _theme(Brightness brightness) {
     final ColorScheme colorScheme = ColorScheme.fromSeed(
-      seedColor: _brandColor,
+      seedColor: AppColors.primary,
       brightness: brightness,
     ).copyWith(
-      primary: _brandColor,
-      onPrimary: _onBrandColor,
+      primary: AppColors.primary,
+      onPrimary: AppColors.onPrimary,
     );
 
     return ThemeData(
@@ -23,27 +21,27 @@ abstract final class AppTheme {
       colorScheme: colorScheme,
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: _brandColor,
-          foregroundColor: _onBrandColor,
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.onPrimary,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: _brandColor,
-          foregroundColor: _onBrandColor,
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.onPrimary,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: _brandColor,
-          side: const BorderSide(color: _brandColor),
+          foregroundColor: AppColors.primary,
+          side: const BorderSide(color: AppColors.primary),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: _brandColor),
+        style: TextButton.styleFrom(foregroundColor: AppColors.primary),
       ),
       iconButtonTheme: IconButtonThemeData(
-        style: IconButton.styleFrom(foregroundColor: _brandColor),
+        style: IconButton.styleFrom(foregroundColor: AppColors.primary),
       ),
     );
   }

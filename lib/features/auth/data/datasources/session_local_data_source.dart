@@ -49,4 +49,11 @@ class SessionLocalDataSource {
       return null;
     }
   }
+
+  Future<void> clear() async {
+    await Future.wait<void>(<Future<void>>[
+      _storage.delete(key: _tokenKey),
+      _storage.delete(key: _userKey),
+    ]);
+  }
 }

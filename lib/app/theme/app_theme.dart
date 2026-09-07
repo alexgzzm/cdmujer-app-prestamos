@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppTheme {
-  static const Color _seedColor = Color(0xFF00695C);
+  static const Color _brandColor = Color(0xFFB6144B);
+  static const Color _onBrandColor = Colors.white;
 
   static ThemeData get lightTheme => _theme(Brightness.light);
 
@@ -9,11 +10,40 @@ abstract final class AppTheme {
   static ThemeData get darkTheme => _theme(Brightness.dark);
 
   static ThemeData _theme(Brightness brightness) {
+    final ColorScheme colorScheme = ColorScheme.fromSeed(
+      seedColor: _brandColor,
+      brightness: brightness,
+    ).copyWith(
+      primary: _brandColor,
+      onPrimary: _onBrandColor,
+    );
+
     return ThemeData(
       useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: _seedColor,
-        brightness: brightness,
+      colorScheme: colorScheme,
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: _brandColor,
+          foregroundColor: _onBrandColor,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _brandColor,
+          foregroundColor: _onBrandColor,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: _brandColor,
+          side: const BorderSide(color: _brandColor),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: _brandColor),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(foregroundColor: _brandColor),
       ),
     );
   }

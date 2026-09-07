@@ -1,5 +1,6 @@
 import 'package:cdmujer_app_prestamos/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:cdmujer_app_prestamos/features/auth/presentation/providers/auth_providers.dart';
+import 'package:cdmujer_app_prestamos/features/auth/presentation/widgets/login_logo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -68,6 +69,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
+                    const LoginLogo(),
+                    const SizedBox(height: 24),
                     Text(
                       'Iniciar sesión',
                       style: Theme.of(context).textTheme.headlineMedium,

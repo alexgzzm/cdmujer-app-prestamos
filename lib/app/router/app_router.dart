@@ -3,6 +3,7 @@ import 'package:cdmujer_app_prestamos/features/auth/presentation/pages/login_pag
 import 'package:cdmujer_app_prestamos/features/clients/presentation/pages/clients_page.dart';
 import 'package:cdmujer_app_prestamos/features/home/presentation/pages/home_page.dart';
 import 'package:cdmujer_app_prestamos/features/loans/presentation/pages/loans_page.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/pages/new_credit_page.dart';
 import 'package:cdmujer_app_prestamos/features/payments/presentation/pages/payments_page.dart';
 import 'package:go_router/go_router.dart';
 
@@ -21,6 +22,10 @@ final GoRouter appRouter = GoRouter(
       routes: <RouteBase>[
         GoRoute(path: '/home', builder: (context, state) => const HomePage()),
         GoRoute(
+          path: '/new-credit',
+          builder: (context, state) => const NewCreditPage(),
+        ),
+        GoRoute(
           path: '/clients',
           builder: (context, state) => const ClientsPage(),
         ),
@@ -37,6 +42,7 @@ final GoRouter appRouter = GoRouter(
 String _titleForPath(String path) {
   return switch (path) {
     '/clients' => 'Clientes',
+    '/new-credit' => 'Nuevo Crédito',
     '/loans' => 'Préstamos',
     '/payments' => 'Pagos',
     _ => 'Inicio',

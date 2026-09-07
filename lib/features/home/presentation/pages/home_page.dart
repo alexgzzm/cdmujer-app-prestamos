@@ -1,5 +1,6 @@
 import 'package:cdmujer_app_prestamos/features/home/presentation/widgets/home_action_button.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -14,18 +15,19 @@ class HomePage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: const <Widget>[
+            children: <Widget>[
               HomeActionButton(
                 label: 'Nuevo Crédito',
                 icon: Icons.add_card_outlined,
+                onPressed: () => context.go('/new-credit'),
               ),
-              SizedBox(height: 20),
-              HomeActionButton(
+              const SizedBox(height: 20),
+              const HomeActionButton(
                 label: 'Renovación',
                 icon: Icons.autorenew,
               ),
-              SizedBox(height: 20),
-              HomeActionButton(
+              const SizedBox(height: 20),
+              const HomeActionButton(
                 label: 'Reingreso',
                 icon: Icons.login,
               ),

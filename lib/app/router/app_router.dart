@@ -3,6 +3,7 @@ import 'package:cdmujer_app_prestamos/features/home/presentation/pages/home_page
 import 'package:cdmujer_app_prestamos/features/loans/presentation/pages/loans_page.dart';
 import 'package:cdmujer_app_prestamos/features/payments/presentation/pages/payments_page.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cdmujer_app_prestamos/features/auth/presentation/pages/login_page.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/login',
@@ -15,4 +16,3 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: '/payments', builder: (context, state) => const PaymentsPage()),
   ],
 );
-import 'package:cdmujer_app_prestamos/features/auth/presentation/pages/login_page.dart';

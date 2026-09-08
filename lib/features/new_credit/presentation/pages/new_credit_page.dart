@@ -1,14 +1,29 @@
+import 'package:cdmujer_app_prestamos/features/auth/domain/entities/auth_session.dart';
+import 'package:cdmujer_app_prestamos/features/auth/presentation/providers/auth_providers.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/attachment_upload_result.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/attachment_upload_exception.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/attachment_providers.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/identity_attachment_buttons.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/responsive_form_fields.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
-class NewCreditPage extends StatefulWidget {
+class NewCreditPage extends ConsumerStatefulWidget {
   const NewCreditPage({super.key});
 
   @override
-  State<NewCreditPage> createState() => _NewCreditPageState();
+  ConsumerState<NewCreditPage> createState() => _NewCreditPageState();
 }
 
-class _NewCreditPageState extends State<NewCreditPage> {
+class _NewCreditPageState extends ConsumerState<NewCreditPage> {
+  static const String _clientFrontSlot = 'client-front';
+  static const String _clientBackSlot = 'client-back';
+  static const String _cosignerFrontSlot = 'cosigner-front';
+  static const String _cosignerBackSlot = 'cosigner-back';
+  static const int _ineFrontFileType = 1;
+  static const int _ineBackFileType = 2;
+
   static const List<String> _stepTitles = <String>[
     'Datos del cliente',
     'Datos del aval',
@@ -141,6 +156,10 @@ class _NewCreditPageState extends State<NewCreditPage> {
   late final Map<String, TextEditingController> _clientControllers;
   late final Map<String, TextEditingController> _cosignerControllers;
   late final Map<String, TextEditingController> _creditControllers;
+  final ImagePicker _imagePicker = ImagePicker();
+  final List<int> _attachmentIds = <int>[];
+  final Map<String, int> _attachmentIdsBySlot = <String, int>{};
+  final Set<String> _uploadingSlots = <String>{};
   int _currentStep = 0;
 
   @override
@@ -179,10 +198,44 @@ class _NewCreditPageState extends State<NewCreditPage> {
               _FormStep(
                 fields: _personFields,
                 controllers: _clientControllers,
+                leading: IdentityAttachmentButtons(
+                  onFrontPressed: () => _captureAndUpload(
+                    slot: _clientFrontSlot,
+                    fileType: _ineFrontFileType,
+                  ),
+                  onBackPressed: () => _captureAndUpload(
+                    slot: _clientBackSlot,
+                    fileType: _ineBackFileType,
+                  ),
+                  frontUploading: _uploadingSlots.contains(_clientFrontSlot),
+                  backUploading: _uploadingSlots.contains(_clientBackSlot),
+                  frontUploaded:
+                      _attachmentIdsBySlot.containsKey(_clientFrontSlot),
+                  backUploaded:
+                      _attachmentIdsBySlot.containsKey(_clientBackSlot),
+                ),
               ),
               _FormStep(
                 fields: _personFields,
                 controllers: _cosignerControllers,
+                leading: IdentityAttachmentButtons(
+                  onFrontPressed: () => _captureAndUpload(
+                    slot: _cosignerFrontSlot,
+                    fileType: _ineFrontFileType,
+                  ),
+                  onBackPressed: () => _captureAndUpload(
+                    slot: _cosignerBackSlot,
+                    fileType: _ineBackFileType,
+                  ),
+                  frontUploading:
+                      _uploadingSlots.contains(_cosignerFrontSlot),
+                  backUploading:
+                      _uploadingSlots.contains(_cosignerBackSlot),
+                  frontUploaded:
+                      _attachmentIdsBySlot.containsKey(_cosignerFrontSlot),
+                  backUploaded:
+                      _attachmentIdsBySlot.containsKey(_cosignerBackSlot),
+                ),
               ),
               _FormStep(
                 fields: _creditFields,
@@ -221,6 +274,78 @@ class _NewCreditPageState extends State<NewCreditPage> {
       setState(() => _currentStep--);
     }
   }
+
+  Future<void> _captureAndUpload({
+    required String slot,
+    required int fileType,
+  }) async {
+    try {
+      final XFile? photo = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        preferredCameraDevice: CameraDevice.rear,
+        imageQuality: 85,
+      );
+      if (photo == null || !mounted) {
+        return;
+      }
+
+      setState(() => _uploadingSlots.add(slot));
+      final AuthSession? session = ref.read(authControllerProvider).whenOrNull(
+            data: (AuthSession? value) => value,
+          );
+      if (session == null) {
+        throw const AttachmentUploadException(
+          'La sesión no está disponible. Inicia sesión nuevamente.',
+        );
+      }
+
+      final AttachmentUploadResult result =
+          await ref.read(attachmentRepositoryProvider).upload(
+                bytes: await photo.readAsBytes(),
+                fileName: photo.name,
+                contentType: photo.mimeType,
+                fileType: fileType,
+                token: session.token,
+              );
+      if (!mounted) {
+        return;
+      }
+
+      setState(() => _storeAttachmentId(slot: slot, id: result.id));
+      _showMessage(
+        result.message.isEmpty
+            ? 'La imagen se cargó correctamente.'
+            : result.message,
+      );
+    } on AttachmentUploadException catch (error) {
+      if (mounted) {
+        _showMessage(error.message);
+      }
+    } on Object {
+      if (mounted) {
+        _showMessage('No fue posible capturar o cargar la imagen.');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _uploadingSlots.remove(slot));
+      }
+    }
+  }
+
+  void _storeAttachmentId({required String slot, required int id}) {
+    final int? previousId = _attachmentIdsBySlot[slot];
+    if (previousId != null) {
+      _attachmentIds.remove(previousId);
+    }
+    _attachmentIdsBySlot[slot] = id;
+    _attachmentIds.add(id);
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
 }
 
 class _WizardHeader extends StatelessWidget {
@@ -256,10 +381,15 @@ class _WizardHeader extends StatelessWidget {
 }
 
 class _FormStep extends StatelessWidget {
-  const _FormStep({required this.fields, required this.controllers});
+  const _FormStep({
+    required this.fields,
+    required this.controllers,
+    this.leading,
+  });
 
   final List<CreditFieldDefinition> fields;
   final Map<String, TextEditingController> controllers;
+  final Widget? leading;
 
   @override
   Widget build(BuildContext context) {
@@ -269,9 +399,18 @@ class _FormStep extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 900),
           child: Form(
-            child: ResponsiveFormFields(
-              fields: fields,
-              controllers: controllers,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                if (leading != null) ...<Widget>[
+                  leading!,
+                  const SizedBox(height: 20),
+                ],
+                ResponsiveFormFields(
+                  fields: fields,
+                  controllers: controllers,
+                ),
+              ],
             ),
           ),
         ),

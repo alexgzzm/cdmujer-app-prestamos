@@ -396,7 +396,13 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
       }
       for (final MapEntry<String, String> entry
           in extractedData.values.entries) {
-        target[entry.key]?.text = entry.value;
+        final TextEditingController? controller = target[entry.key];
+        if (controller != null) {
+          controller.value = TextEditingValue(
+            text: entry.value,
+            selection: TextSelection.collapsed(offset: entry.value.length),
+          );
+        }
       }
     } on IneExtractionException {
       if (mounted) {

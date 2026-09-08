@@ -1,4 +1,3 @@
-import 'package:cdmujer_app_prestamos/app/theme/app_colors.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/responsive_form_fields.dart';
 import 'package:flutter/material.dart';
 
@@ -18,11 +17,6 @@ class _NewCreditPageState extends State<NewCreditPage> {
 
   static const List<CreditFieldDefinition> _personFields =
       <CreditFieldDefinition>[
-    CreditFieldDefinition(
-      name: 'id',
-      label: 'ID',
-      keyboardType: TextInputType.number,
-    ),
     CreditFieldDefinition(
       name: 'client',
       label: 'Número de cliente',
@@ -90,11 +84,6 @@ class _NewCreditPageState extends State<NewCreditPage> {
 
   static const List<CreditFieldDefinition> _creditFields =
       <CreditFieldDefinition>[
-    CreditFieldDefinition(
-      name: 'id',
-      label: 'ID',
-      keyboardType: TextInputType.number,
-    ),
     CreditFieldDefinition(
       name: 'idRoute',
       label: 'Ruta',
@@ -255,15 +244,8 @@ class _WizardHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Text(
-                'Paso ${currentStep + 1} de $stepCount',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: AppColors.primary,
-                    ),
-              ),
-              const SizedBox(height: 6),
               Text(title, style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               LinearProgressIndicator(value: (currentStep + 1) / stepCount),
             ],
           ),

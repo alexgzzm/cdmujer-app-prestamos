@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:cdmujer_app_prestamos/core/constants/api_config.dart';
+import 'package:cdmujer_app_prestamos/core/network/multipart_utils.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/data/models/attachment_upload_response_model.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/attachment_upload_exception.dart';
 import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart';
 
 class AttachmentRemoteDataSource {
   AttachmentRemoteDataSource({required http.Client client}) : _client = client;
@@ -34,7 +34,7 @@ class AttachmentRemoteDataSource {
           'formFile',
           bytes,
           filename: fileName,
-          contentType: _parseContentType(contentType),
+          contentType: MultipartUtils.imageContentType(contentType),
         ),
       );
 
@@ -80,17 +80,6 @@ class AttachmentRemoteDataSource {
       throw const AttachmentUploadException(
         'No fue posible conectar con el servicio de archivos.',
       );
-    }
-  }
-
-  MediaType _parseContentType(String? contentType) {
-    if (contentType == null || contentType.isEmpty) {
-      return MediaType('image', 'jpeg');
-    }
-    try {
-      return MediaType.parse(contentType);
-    } on FormatException {
-      return MediaType('image', 'jpeg');
     }
   }
 

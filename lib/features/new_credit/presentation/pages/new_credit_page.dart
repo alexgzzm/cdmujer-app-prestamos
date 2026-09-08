@@ -1,7 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:cdmujer_app_prestamos/features/auth/domain/entities/auth_session.dart';
 import 'package:cdmujer_app_prestamos/features/auth/presentation/providers/auth_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/attachment_upload_result.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/ine_extracted_data.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/attachment_upload_exception.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/ine_extraction_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/attachment_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/identity_attachment_buttons.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/responsive_form_fields.dart';
@@ -202,6 +206,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
                   onFrontPressed: () => _captureAndUpload(
                     slot: _clientFrontSlot,
                     fileType: _ineFrontFileType,
+                    extractionTarget: _clientControllers,
                   ),
                   onBackPressed: () => _captureAndUpload(
                     slot: _clientBackSlot,
@@ -222,6 +227,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
                   onFrontPressed: () => _captureAndUpload(
                     slot: _cosignerFrontSlot,
                     fileType: _ineFrontFileType,
+                    extractionTarget: _cosignerControllers,
                   ),
                   onBackPressed: () => _captureAndUpload(
                     slot: _cosignerBackSlot,
@@ -278,6 +284,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
   Future<void> _captureAndUpload({
     required String slot,
     required int fileType,
+    Map<String, TextEditingController>? extractionTarget,
   }) async {
     try {
       final XFile? photo = await _imagePicker.pickImage(
@@ -298,25 +305,25 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
           'La sesión no está disponible. Inicia sesión nuevamente.',
         );
       }
+      final Uint8List bytes = await photo.readAsBytes();
 
-      final AttachmentUploadResult result =
-          await ref.read(attachmentRepositoryProvider).upload(
-                bytes: await photo.readAsBytes(),
-                fileName: photo.name,
-                contentType: photo.mimeType,
-                fileType: fileType,
-                token: session.token,
-              );
-      if (!mounted) {
-        return;
-      }
-
-      setState(() => _storeAttachmentId(slot: slot, id: result.id));
-      _showMessage(
-        result.message.isEmpty
-            ? 'La imagen se cargó correctamente.'
-            : result.message,
+      await _uploadAttachment(
+        slot: slot,
+        fileType: fileType,
+        bytes: bytes,
+        fileName: photo.name,
+        contentType: photo.mimeType,
+        token: session.token,
       );
+      if (extractionTarget != null) {
+        await _extractIneData(
+          bytes: bytes,
+          fileName: photo.name,
+          contentType: photo.mimeType,
+          token: session.token,
+          target: extractionTarget,
+        );
+      }
     } on AttachmentUploadException catch (error) {
       if (mounted) {
         _showMessage(error.message);
@@ -330,6 +337,97 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
         setState(() => _uploadingSlots.remove(slot));
       }
     }
+  }
+
+  Future<void> _uploadAttachment({
+    required String slot,
+    required int fileType,
+    required Uint8List bytes,
+    required String fileName,
+    required String? contentType,
+    required String token,
+  }) async {
+    try {
+      final AttachmentUploadResult result =
+          await ref.read(attachmentRepositoryProvider).upload(
+                bytes: bytes,
+                fileName: fileName,
+                contentType: contentType,
+                fileType: fileType,
+                token: token,
+              );
+      if (!mounted) {
+        return;
+      }
+      setState(() => _storeAttachmentId(slot: slot, id: result.id));
+      _showMessage(
+        result.message.isEmpty
+            ? 'La imagen se cargó correctamente.'
+            : result.message,
+      );
+    } on AttachmentUploadException catch (error) {
+      if (mounted) {
+        _showMessage(error.message);
+      }
+    } on Object {
+      if (mounted) {
+        _showMessage('No fue posible cargar la imagen.');
+      }
+    }
+  }
+
+  Future<void> _extractIneData({
+    required Uint8List bytes,
+    required String fileName,
+    required String? contentType,
+    required String token,
+    required Map<String, TextEditingController> target,
+  }) async {
+    try {
+      final IneExtractedData extractedData =
+          await ref.read(ineDataRepositoryProvider).extract(
+                bytes: bytes,
+                fileName: fileName,
+                contentType: contentType,
+                token: token,
+              );
+      if (!mounted) {
+        return;
+      }
+      for (final MapEntry<String, String> entry
+          in extractedData.values.entries) {
+        target[entry.key]?.text = entry.value;
+      }
+    } on IneExtractionException {
+      if (mounted) {
+        await _showIneExtractionError();
+      }
+    } on Object {
+      if (mounted) {
+        await _showIneExtractionError();
+      }
+    }
+  }
+
+  Future<void> _showIneExtractionError() {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Datos del INE no disponibles'),
+          content: const Text(
+            'En este momento no podemos obtener los datos del INE. '
+            'Captura la información manualmente.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Aceptar'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _storeAttachmentId({required String slot, required int id}) {

@@ -42,7 +42,9 @@ class ResponsiveFormFields extends StatelessWidget {
               width: fieldWidth,
               child: TextFormField(
                 controller: controllers[field.name],
-                keyboardType: field.keyboardType,
+                keyboardType: field.maxLines > 1
+                    ? TextInputType.multiline
+                    : field.keyboardType,
                 maxLines: field.maxLines,
                 textInputAction: field.maxLines > 1
                     ? TextInputAction.newline

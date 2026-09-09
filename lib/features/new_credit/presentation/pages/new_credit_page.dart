@@ -143,21 +143,6 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
       label: 'Fecha del primer pago',
       keyboardType: TextInputType.datetime,
     ),
-    CreditFieldDefinition(
-      name: 'globalInterest',
-      label: 'Interés global',
-      keyboardType: TextInputType.numberWithOptions(decimal: true),
-    ),
-    CreditFieldDefinition(
-      name: 'iva',
-      label: 'IVA',
-      keyboardType: TextInputType.numberWithOptions(decimal: true),
-    ),
-    CreditFieldDefinition(
-      name: 'insurance',
-      label: 'Seguro',
-      keyboardType: TextInputType.numberWithOptions(decimal: true),
-    ),
     CreditFieldDefinition(name: 'beneficiary', label: 'Beneficiario'),
     CreditFieldDefinition(name: 'relationship', label: 'Parentesco'),
     CreditFieldDefinition(

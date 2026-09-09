@@ -14,7 +14,6 @@ class LoanPersonData {
     required this.zipCode,
     required this.phoneNumber,
     required this.maritalStatus,
-    required this.rfc,
     required this.curp,
   });
 
@@ -32,7 +31,6 @@ class LoanPersonData {
   final String zipCode;
   final String phoneNumber;
   final int maritalStatus;
-  final String rfc;
   final String curp;
 }
 
@@ -44,7 +42,7 @@ class LoanCreationData {
     required this.cosigner,
     required this.date,
     required this.ammount,
-    required this.paymentMethod,
+    required this.term,
     required this.firstPaymentDate,
     required this.beneficiary,
     required this.relationship,
@@ -58,7 +56,7 @@ class LoanCreationData {
   final LoanPersonData cosigner;
   final DateTime date;
   final double ammount;
-  final int paymentMethod;
+  final int term;
   final DateTime firstPaymentDate;
   final String beneficiary;
   final String relationship;

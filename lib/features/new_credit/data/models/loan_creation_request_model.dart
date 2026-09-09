@@ -14,11 +14,8 @@ class LoanCreationRequestModel {
       'cosigner': _personToJson(data.cosigner),
       'date': data.date.toUtc().toIso8601String(),
       'ammount': data.ammount,
-      'paymentMethod': data.paymentMethod,
+      'term': data.term,
       'firstPaymentDate': data.firstPaymentDate.toUtc().toIso8601String(),
-      'globalInterest': 0,
-      'iva': 0,
-      'insurance': 0,
       'beneficiary': data.beneficiary,
       'relationship': data.relationship,
       'comments': data.comments,
@@ -29,7 +26,6 @@ class LoanCreationRequestModel {
   Map<String, dynamic> _personToJson(LoanPersonData person) {
     return <String, dynamic>{
       'id': 0,
-      'client': 0,
       'lastname': person.lastname,
       'surname': person.surname,
       'name': person.name,
@@ -44,9 +40,7 @@ class LoanCreationRequestModel {
       'zipCode': person.zipCode,
       'phoneNumber': person.phoneNumber,
       'maritalStatus': person.maritalStatus,
-      'rfc': person.rfc,
       'curp': person.curp,
-      'ine': '',
     };
   }
 }

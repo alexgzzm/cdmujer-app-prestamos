@@ -107,7 +107,6 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
       label: 'Estado civil',
       keyboardType: TextInputType.number,
     ),
-    CreditFieldDefinition(name: 'rfc', label: 'RFC'),
     CreditFieldDefinition(name: 'curp', label: 'CURP'),
   ];
 
@@ -134,8 +133,8 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
       keyboardType: TextInputType.numberWithOptions(decimal: true),
     ),
     CreditFieldDefinition(
-      name: 'paymentMethod',
-      label: 'Método de pago',
+      name: 'term',
+      label: 'Plazo',
       keyboardType: TextInputType.number,
     ),
     CreditFieldDefinition(
@@ -508,6 +507,10 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
     if (ammount == null || ammount <= 0) {
       throw const LoanCreationException('Captura un monto válido.');
     }
+    final int term = _requiredPositiveInt(
+      _creditControllers['term']!.text,
+      'Captura un plazo válido.',
+    );
 
     return LoanCreationData(
       idRoute: idRoute,
@@ -516,7 +519,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
       cosigner: _personDataFrom(_cosignerControllers),
       date: date,
       ammount: ammount,
-      paymentMethod: _intValue(_creditControllers, 'paymentMethod'),
+      term: term,
       firstPaymentDate: firstPaymentDate,
       beneficiary: _textValue(_creditControllers, 'beneficiary'),
       relationship: _textValue(_creditControllers, 'relationship'),
@@ -543,7 +546,6 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
       zipCode: _textValue(controllers, 'zipCode'),
       phoneNumber: _textValue(controllers, 'phoneNumber'),
       maritalStatus: _intValue(controllers, 'maritalStatus'),
-      rfc: _textValue(controllers, 'rfc'),
       curp: _textValue(controllers, 'curp'),
     );
   }

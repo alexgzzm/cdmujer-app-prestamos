@@ -11,13 +11,26 @@ void main() {
     expect(json['idRoute'], 122);
     expect(json['idGroup'], 1302);
     expect(json['ammount'], 12500.50);
+    expect(json['term'], 16);
     expect(json['date'], '2026-09-09T00:00:00.000Z');
     expect(json['firstPaymentDate'], '2026-10-09T00:00:00.000Z');
-    expect(json['globalInterest'], 0);
-    expect(json['iva'], 0);
-    expect(json['insurance'], 0);
+    expect(json, isNot(contains('paymentMethod')));
+    expect(json, isNot(contains('globalInterest')));
+    expect(json, isNot(contains('iva')));
+    expect(json, isNot(contains('insurance')));
     expect(json['attachments'], <int>[11, 12]);
-    expect((json['client'] as Map<String, dynamic>)['ine'], '');
+    expect(
+      json['client'] as Map<String, dynamic>,
+      isNot(contains('client')),
+    );
+    expect(
+      json['client'] as Map<String, dynamic>,
+      isNot(contains('rfc')),
+    );
+    expect(
+      json['client'] as Map<String, dynamic>,
+      isNot(contains('ine')),
+    );
     expect((json['cosigner'] as Map<String, dynamic>)['city'], 19001);
   });
 
@@ -52,7 +65,6 @@ LoanCreationData _sampleLoan() {
     zipCode: '64000',
     phoneNumber: '5555555555',
     maritalStatus: 1,
-    rfc: 'GAMG700626ABC',
     curp: 'GAMG700626MMNLRL04',
   );
   return LoanCreationData(
@@ -62,7 +74,7 @@ LoanCreationData _sampleLoan() {
     cosigner: person,
     date: DateTime.utc(2026, 9, 9),
     ammount: 12500.50,
-    paymentMethod: 1,
+    term: 16,
     firstPaymentDate: DateTime.utc(2026, 10, 9),
     beneficiary: 'Beneficiario',
     relationship: 'Hijo',

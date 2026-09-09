@@ -23,5 +23,7 @@ void main() {
     await tester.tap(find.text('Siguiente'));
     await tester.pump();
     expect(find.text('Información del crédito'), findsOneWidget);
+    expect(find.text('Plazo'), findsOneWidget);
+    expect(find.text('Método de pago'), findsNothing);
   });
 }

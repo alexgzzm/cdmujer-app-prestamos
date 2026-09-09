@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 class SessionDrawer extends ConsumerWidget {
-  const SessionDrawer({super.key});
+  const SessionDrawer({this.confirmHomeExit = false, super.key});
+
+  final bool confirmHomeExit;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -35,10 +37,7 @@ class SessionDrawer extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.home_outlined),
             title: const Text('Inicio'),
-            onTap: () {
-              Navigator.of(context).pop();
-              context.go('/home');
-            },
+            onTap: () => _goHome(context),
           ),
           ListTile(
             leading: const Icon(Icons.logout),
@@ -51,6 +50,38 @@ class SessionDrawer extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _goHome(BuildContext context) async {
+    if (confirmHomeExit) {
+      final bool shouldContinue = await showDialog<bool>(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                content: const Text(
+                  'Los datos capturados se perderán, ¿desea continuar?',
+                ),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('Cancelar'),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: const Text('Continuar'),
+                  ),
+                ],
+              );
+            },
+          ) ??
+          false;
+      if (!shouldContinue || !context.mounted) {
+        return;
+      }
+    }
+
+    Navigator.of(context).pop();
+    context.go('/home');
   }
 
   Future<void> _signOut({

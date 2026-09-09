@@ -2,16 +2,22 @@ import 'package:cdmujer_app_prestamos/app/widgets/session_drawer.dart';
 import 'package:flutter/material.dart';
 
 class AppScaffold extends StatelessWidget {
-  const AppScaffold({required this.title, required this.child, super.key});
+  const AppScaffold({
+    required this.title,
+    required this.child,
+    this.confirmHomeExit = false,
+    super.key,
+  });
 
   final String title;
   final Widget child;
+  final bool confirmHomeExit;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(title)),
-      drawer: const SessionDrawer(),
+      drawer: SessionDrawer(confirmHomeExit: confirmHomeExit),
       body: child,
     );
   }

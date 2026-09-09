@@ -16,6 +16,7 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state, child) {
         return AppScaffold(
           title: _titleForPath(state.uri.path),
+          confirmHomeExit: state.uri.path == '/new-credit',
           child: child,
         );
       },

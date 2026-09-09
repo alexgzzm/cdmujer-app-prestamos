@@ -26,6 +26,7 @@ void main() {
                 isLoading: false,
                 errorMessage: null,
                 onRetry: () {},
+                onChanged: (String? value) {},
               ),
               StateDropdown(
                 controller: cosignerController,
@@ -33,6 +34,7 @@ void main() {
                 isLoading: false,
                 errorMessage: null,
                 onRetry: () {},
+                onChanged: (String? value) {},
               ),
             ],
           ),

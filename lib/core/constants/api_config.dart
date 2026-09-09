@@ -10,4 +10,6 @@ abstract final class ApiConfig {
       Uri.parse('https://localhost:7127/api/Groups');
   static final Uri statesEndpoint =
       Uri.parse('https://localhost:7127/api/Locations/GetStates');
+  static final Uri citiesEndpoint =
+      Uri.parse('https://localhost:7127/api/Locations/GetCities');
 }

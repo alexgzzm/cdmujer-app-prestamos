@@ -1,46 +1,46 @@
-import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/state_option.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/city_option.dart';
 import 'package:flutter/material.dart';
 
-class StateDropdown extends StatelessWidget {
-  const StateDropdown({
+class CityDropdown extends StatelessWidget {
+  const CityDropdown({
     required this.controller,
-    required this.states,
+    required this.cities,
     required this.isLoading,
     required this.errorMessage,
+    required this.isStateSelected,
     required this.onRetry,
-    required this.onChanged,
     super.key,
   });
 
   final TextEditingController controller;
-  final List<StateOption> states;
+  final List<CityOption> cities;
   final bool isLoading;
   final String? errorMessage;
+  final bool isStateSelected;
   final VoidCallback onRetry;
-  final ValueChanged<String?> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    final bool hasSelectedState =
-        states.any((StateOption state) => state.value == controller.text);
-    final String? selectedValue = hasSelectedState ? controller.text : null;
+    final bool hasSelectedCity =
+        cities.any((CityOption city) => city.value == controller.text);
+    final String? selectedValue = hasSelectedCity ? controller.text : null;
+    final bool isEnabled =
+        isStateSelected && !isLoading && errorMessage == null && cities.isNotEmpty;
 
     return DropdownButtonFormField<String>(
       value: selectedValue,
       isExpanded: true,
-      onChanged: isLoading || errorMessage != null || states.isEmpty
-          ? null
-          : onChanged,
-      items: states
+      onChanged: isEnabled ? (String? value) => controller.text = value ?? '' : null,
+      items: cities
           .map(
-            (StateOption state) => DropdownMenuItem<String>(
-              value: state.value,
-              child: Text(state.description, overflow: TextOverflow.ellipsis),
+            (CityOption city) => DropdownMenuItem<String>(
+              value: city.value,
+              child: Text(city.description, overflow: TextOverflow.ellipsis),
             ),
           )
           .toList(growable: false),
       decoration: InputDecoration(
-        labelText: 'Estado',
+        labelText: 'Municipio',
         border: const OutlineInputBorder(),
         errorText: errorMessage,
         suffixIcon: isLoading
@@ -61,11 +61,13 @@ class StateDropdown extends StatelessWidget {
                 : null,
       ),
       hint: Text(
-        isLoading
-            ? 'Cargando estados...'
-            : states.isEmpty
-                ? 'No hay estados disponibles'
-                : 'Selecciona un estado',
+        !isStateSelected
+            ? 'Selecciona un estado primero'
+            : isLoading
+                ? 'Cargando municipios...'
+                : cities.isEmpty
+                    ? 'No hay municipios disponibles'
+                    : 'Selecciona un municipio',
       ),
     );
   }

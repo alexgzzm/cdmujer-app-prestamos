@@ -3,22 +3,26 @@ import 'dart:typed_data';
 import 'package:cdmujer_app_prestamos/features/auth/domain/entities/auth_session.dart';
 import 'package:cdmujer_app_prestamos/features/auth/presentation/providers/auth_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/attachment_upload_result.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/city_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/ine_extracted_data.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_group_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_route_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/state_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/attachment_upload_exception.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/cities_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/ine_extraction_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/groups_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/routes_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/states_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/attachment_providers.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/city_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_group_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_route_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/state_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/utils/ine_form_populator.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/identity_attachment_buttons.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/credit_date_picker.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/city_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/currency_amount_field.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/loan_group_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/loan_route_dropdown.dart';
@@ -168,12 +172,18 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
   List<LoanGroupOption> _groups = <LoanGroupOption>[];
   List<LoanRouteOption> _routes = <LoanRouteOption>[];
   List<StateOption> _states = <StateOption>[];
+  List<CityOption> _clientCities = <CityOption>[];
+  List<CityOption> _cosignerCities = <CityOption>[];
+  String? _clientCitiesErrorMessage;
+  String? _cosignerCitiesErrorMessage;
   String? _groupsErrorMessage;
   String? _routesErrorMessage;
   String? _statesErrorMessage;
   bool _isLoadingGroups = false;
   bool _isLoadingRoutes = false;
   bool _isLoadingStates = false;
+  bool _isLoadingClientCities = false;
+  bool _isLoadingCosignerCities = false;
   bool _hasLoadedRoutes = false;
   bool _hasLoadedStates = false;
   int _currentStep = 0;
@@ -223,6 +233,16 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
                     isLoading: _isLoadingStates,
                     errorMessage: _statesErrorMessage,
                     onRetry: () => _loadStates(force: true),
+                    onChanged: _onClientStateChanged,
+                  ),
+                  'city': CityDropdown(
+                    controller: _clientControllers['city']!,
+                    cities: _clientCities,
+                    isLoading: _isLoadingClientCities,
+                    errorMessage: _clientCitiesErrorMessage,
+                    isStateSelected:
+                        _clientControllers['state']!.text.isNotEmpty,
+                    onRetry: _loadClientCitiesForSelectedState,
                   ),
                 },
                 leading: IdentityAttachmentButtons(
@@ -253,6 +273,16 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
                     isLoading: _isLoadingStates,
                     errorMessage: _statesErrorMessage,
                     onRetry: () => _loadStates(force: true),
+                    onChanged: _onCosignerStateChanged,
+                  ),
+                  'city': CityDropdown(
+                    controller: _cosignerControllers['city']!,
+                    cities: _cosignerCities,
+                    isLoading: _isLoadingCosignerCities,
+                    errorMessage: _cosignerCitiesErrorMessage,
+                    isStateSelected:
+                        _cosignerControllers['state']!.text.isNotEmpty,
+                    onRetry: _loadCosignerCitiesForSelectedState,
                   ),
                 },
                 leading: IdentityAttachmentButtons(
@@ -435,6 +465,130 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
     } finally {
       if (mounted) {
         setState(() => _isLoadingStates = false);
+      }
+    }
+  }
+
+  void _onClientStateChanged(String? stateId) {
+    _onStateChanged(
+      stateId: stateId,
+      controllers: _clientControllers,
+      clearCities: () => _clientCities = <CityOption>[],
+      clearError: () => _clientCitiesErrorMessage = null,
+      loadCities: _loadClientCities,
+    );
+  }
+
+  void _onCosignerStateChanged(String? stateId) {
+    _onStateChanged(
+      stateId: stateId,
+      controllers: _cosignerControllers,
+      clearCities: () => _cosignerCities = <CityOption>[],
+      clearError: () => _cosignerCitiesErrorMessage = null,
+      loadCities: _loadCosignerCities,
+    );
+  }
+
+  void _onStateChanged({
+    required String? stateId,
+    required Map<String, TextEditingController> controllers,
+    required VoidCallback clearCities,
+    required VoidCallback clearError,
+    required void Function({required String stateId}) loadCities,
+  }) {
+    final String selectedStateId = stateId ?? '';
+    if (controllers['state']!.text == selectedStateId) {
+      return;
+    }
+    setState(() {
+      controllers['state']!.text = selectedStateId;
+      controllers['city']!.clear();
+      clearCities();
+      clearError();
+    });
+    if (selectedStateId.isNotEmpty) {
+      loadCities(stateId: selectedStateId);
+    }
+  }
+
+  Future<void> _loadClientCitiesForSelectedState() {
+    final String stateId = _clientControllers['state']!.text;
+    return stateId.isEmpty
+        ? Future<void>.value()
+        : _loadClientCities(stateId: stateId);
+  }
+
+  Future<void> _loadCosignerCitiesForSelectedState() {
+    final String stateId = _cosignerControllers['state']!.text;
+    return stateId.isEmpty
+        ? Future<void>.value()
+        : _loadCosignerCities(stateId: stateId);
+  }
+
+  Future<void> _loadClientCities({required String stateId}) {
+    return _loadCities(
+      stateId: stateId,
+      controllers: _clientControllers,
+      beginLoading: () => _isLoadingClientCities = true,
+      endLoading: () => _isLoadingClientCities = false,
+      setCities: (List<CityOption> cities) => _clientCities = cities,
+      setError: (String? message) => _clientCitiesErrorMessage = message,
+    );
+  }
+
+  Future<void> _loadCosignerCities({required String stateId}) {
+    return _loadCities(
+      stateId: stateId,
+      controllers: _cosignerControllers,
+      beginLoading: () => _isLoadingCosignerCities = true,
+      endLoading: () => _isLoadingCosignerCities = false,
+      setCities: (List<CityOption> cities) => _cosignerCities = cities,
+      setError: (String? message) => _cosignerCitiesErrorMessage = message,
+    );
+  }
+
+  Future<void> _loadCities({
+    required String stateId,
+    required Map<String, TextEditingController> controllers,
+    required VoidCallback beginLoading,
+    required VoidCallback endLoading,
+    required ValueChanged<List<CityOption>> setCities,
+    required ValueChanged<String?> setError,
+  }) async {
+    setState(() {
+      beginLoading();
+      setError(null);
+    });
+    try {
+      final AuthSession? session = ref.read(authControllerProvider).whenOrNull(
+            data: (AuthSession? value) => value,
+          );
+      if (session == null) {
+        throw const CitiesException(
+          'La sesión no está disponible. Inicia sesión nuevamente.',
+        );
+      }
+
+      final List<CityOption> cities =
+          await ref.read(cityRepositoryProvider).getCities(
+                stateId: stateId,
+                token: session.token,
+              );
+      if (!mounted || controllers['state']!.text != stateId) {
+        return;
+      }
+      setState(() => setCities(cities));
+    } on CitiesException catch (error) {
+      if (mounted && controllers['state']!.text == stateId) {
+        setState(() => setError(error.message));
+      }
+    } on Object {
+      if (mounted && controllers['state']!.text == stateId) {
+        setState(() => setError('No fue posible cargar los municipios.'));
+      }
+    } finally {
+      if (mounted && controllers['state']!.text == stateId) {
+        setState(endLoading);
       }
     }
   }

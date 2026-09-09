@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:cdmujer_app_prestamos/features/auth/domain/entities/auth_session.dart';
@@ -6,17 +7,20 @@ import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/attach
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/city_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/ine_extracted_data.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_group_option.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_information_validation.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_route_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/state_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/attachment_upload_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/cities_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/ine_extraction_exception.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/loan_information_validation_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/groups_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/routes_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/states_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/attachment_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/city_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_group_providers.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_information_validation_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_route_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/state_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/utils/ine_form_populator.dart';
@@ -30,6 +34,7 @@ import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/r
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/state_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 class NewCreditPage extends ConsumerStatefulWidget {
@@ -148,6 +153,8 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
   late final Map<String, TextEditingController> _creditControllers;
   final TextEditingController _amountDisplayController = TextEditingController();
   final ImagePicker _imagePicker = ImagePicker();
+  Timer? _clientCurpValidationTimer;
+  String? _lastValidatedClientCurp;
   final List<int> _attachmentIds = <int>[];
   final Map<String, int> _attachmentIdsBySlot = <String, int>{};
   final Set<String> _uploadingSlots = <String>{};
@@ -176,11 +183,14 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
     _clientControllers = _createControllers(_personFields);
     _cosignerControllers = _createControllers(_personFields);
     _creditControllers = _createControllers(_creditFields);
+    _clientControllers['curp']!.addListener(_onClientCurpChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadStates());
   }
 
   @override
   void dispose() {
+    _clientCurpValidationTimer?.cancel();
+    _clientControllers['curp']!.removeListener(_onClientCurpChanged);
     for (final TextEditingController controller in <TextEditingController>[
       ..._clientControllers.values,
       ..._cosignerControllers.values,
@@ -405,6 +415,89 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
       if (mounted) {
         setState(() => _isLoadingRoutes = false);
       }
+    }
+  }
+
+  void _onClientCurpChanged() {
+    _clientCurpValidationTimer?.cancel();
+    final String curp = _clientControllers['curp']!.text.trim().toUpperCase();
+    if (curp.length != 18 || curp == _lastValidatedClientCurp) {
+      return;
+    }
+    _clientCurpValidationTimer = Timer(
+      const Duration(milliseconds: 600),
+      () => _validateClientCurp(curp),
+    );
+  }
+
+  Future<void> _validateClientCurp(String curp) async {
+    try {
+      final AuthSession? session = ref.read(authControllerProvider).whenOrNull(
+            data: (AuthSession? value) => value,
+          );
+      if (session == null) {
+        throw const LoanInformationValidationException(
+          'La sesión no está disponible. Inicia sesión nuevamente.',
+        );
+      }
+
+      final LoanInformationValidation validation = await ref
+          .read(loanInformationValidationRepositoryProvider)
+          .validate(curp: curp, token: session.token);
+      if (!mounted ||
+          _clientControllers['curp']!.text.trim().toUpperCase() != curp) {
+        return;
+      }
+      _lastValidatedClientCurp = curp;
+      if (!validation.shouldShowMessage) {
+        return;
+      }
+
+      await _showCurpValidationDialog(
+        message: validation.message,
+        mustReturnHome: validation.mustReturnHome,
+      );
+    } on LoanInformationValidationException catch (error) {
+      if (mounted &&
+          _clientControllers['curp']!.text.trim().toUpperCase() == curp) {
+        await _showCurpValidationDialog(
+          message: error.message,
+          mustReturnHome: false,
+        );
+      }
+    } on Object {
+      if (mounted &&
+          _clientControllers['curp']!.text.trim().toUpperCase() == curp) {
+        await _showCurpValidationDialog(
+          message: 'No fue posible validar la información del CURP.',
+          mustReturnHome: false,
+        );
+      }
+    }
+  }
+
+  Future<void> _showCurpValidationDialog({
+    required String message,
+    required bool mustReturnHome,
+  }) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: !mustReturnHome,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(mustReturnHome ? 'No es posible continuar' : 'Advertencia'),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Aceptar'),
+            ),
+          ],
+        );
+      },
+    );
+    if (mustReturnHome && mounted) {
+      context.go('/home');
     }
   }
 

@@ -38,6 +38,7 @@ import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/s
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/state_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -91,6 +92,10 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
       name: 'zipCode',
       label: 'Código postal',
       keyboardType: TextInputType.number,
+      maxLength: 5,
+      inputFormatters: <TextInputFormatter>[
+        FilteringTextInputFormatter.digitsOnly,
+      ],
     ),
     CreditFieldDefinition(
       name: 'phoneNumber',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class CreditFieldDefinition {
   const CreditFieldDefinition({
@@ -6,12 +7,16 @@ class CreditFieldDefinition {
     required this.label,
     this.keyboardType = TextInputType.text,
     this.maxLines = 1,
+    this.maxLength,
+    this.inputFormatters = const <TextInputFormatter>[],
   });
 
   final String name;
   final String label;
   final TextInputType keyboardType;
   final int maxLines;
+  final int? maxLength;
+  final List<TextInputFormatter> inputFormatters;
 }
 
 class ResponsiveFormFields extends StatelessWidget {
@@ -49,6 +54,8 @@ class ResponsiveFormFields extends StatelessWidget {
                         ? TextInputType.multiline
                         : field.keyboardType,
                     maxLines: field.maxLines,
+                    maxLength: field.maxLength,
+                    inputFormatters: field.inputFormatters,
                     textInputAction: field.maxLines > 1
                         ? TextInputAction.newline
                         : TextInputAction.next,

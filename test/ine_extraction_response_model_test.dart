@@ -1,4 +1,5 @@
 import 'package:cdmujer_app_prestamos/features/new_credit/data/models/ine_extraction_response_model.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/ine_extracted_data.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -14,23 +15,22 @@ void main() {
       'curp': 'GOME940127HNLNRRO9',
     });
 
-    expect(result.values['lastname'], 'GONZALEZ');
-    expect(result.values['surname'], 'MARTINEZ');
-    expect(result.values['name'], 'ERICK ALEJANDRO');
-    expect(result.values['street'], 'C KANDA 315');
-    expect(result.values['suburb'], 'FRACC PRIVADA MASAI');
-    expect(result.values['zipCode'], '67205');
-    expect(result.values['curp'], 'GOME940127HNLNRRO9');
+    final IneExtractedData data = result.toEntity();
+    expect(data.lastname, 'GONZALEZ');
+    expect(data.surname, 'MARTINEZ');
+    expect(data.name, 'ERICK ALEJANDRO');
+    expect(data.street, 'C KANDA 315');
+    expect(data.suburb, 'FRACC PRIVADA MASAI');
+    expect(data.zipCode, '67205');
+    expect(data.curp, 'GOME940127HNLNRRO9');
   });
 
-  test('maps a direct client number without treating it as a wrapper', () {
+  test('maps CURP without depending on JSON key capitalization', () {
     final IneExtractionResponseModel result =
         IneExtractionResponseModel.fromJson(<String, dynamic>{
-      'client': 25,
-      'name': 'ANA',
+      'CURP': 'GOME940127HNLNRRO9',
     });
 
-    expect(result.values['client'], '25');
-    expect(result.values['name'], 'ANA');
+    expect(result.toEntity().curp, 'GOME940127HNLNRRO9');
   });
 }

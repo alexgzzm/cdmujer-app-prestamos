@@ -50,7 +50,7 @@ class IneDataRemoteDataSource {
 
       final IneExtractionResponseModel result =
           IneExtractionResponseModel.fromJson(responseBody);
-      if (!result.status || result.values.isEmpty) {
+      if (!result.status || !result.data.hasValues) {
         throw const IneExtractionException();
       }
       return result;

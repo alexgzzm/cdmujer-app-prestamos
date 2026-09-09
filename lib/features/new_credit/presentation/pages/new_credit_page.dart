@@ -7,6 +7,7 @@ import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/ine_ex
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/attachment_upload_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/ine_extraction_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/attachment_providers.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/utils/ine_form_populator.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/identity_attachment_buttons.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/responsive_form_fields.dart';
 import 'package:flutter/material.dart';
@@ -394,16 +395,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
       if (!mounted) {
         return;
       }
-      for (final MapEntry<String, String> entry
-          in extractedData.values.entries) {
-        final TextEditingController? controller = target[entry.key];
-        if (controller != null) {
-          controller.value = TextEditingValue(
-            text: entry.value,
-            selection: TextSelection.collapsed(offset: entry.value.length),
-          );
-        }
-      }
+      IneFormPopulator.apply(data: extractedData, controllers: target);
     } on IneExtractionException {
       if (mounted) {
         await _showIneExtractionError();

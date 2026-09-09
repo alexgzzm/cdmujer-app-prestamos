@@ -21,17 +21,29 @@ class LoanGroupDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Map<String, LoanGroupOption> groupsByValue =
+        <String, LoanGroupOption>{
+      for (final LoanGroupOption group in groups) group.value: group,
+    };
+    final List<LoanGroupOption> uniqueGroups = groupsByValue.values.toList(
+      growable: false,
+    );
     final bool hasSelectedGroup =
-        groups.any((LoanGroupOption group) => group.value == controller.text);
+        uniqueGroups.any(
+          (LoanGroupOption group) => group.value == controller.text,
+        );
     final String? selectedValue = hasSelectedGroup ? controller.text : null;
     final bool isEnabled =
-        isRouteSelected && !isLoading && errorMessage == null && groups.isNotEmpty;
+        isRouteSelected &&
+        !isLoading &&
+        errorMessage == null &&
+        uniqueGroups.isNotEmpty;
 
     return DropdownButtonFormField<String>(
       value: selectedValue,
       isExpanded: true,
       onChanged: isEnabled ? (String? value) => controller.text = value ?? '' : null,
-      items: groups
+      items: uniqueGroups
           .map(
             (LoanGroupOption group) => DropdownMenuItem<String>(
               value: group.value,

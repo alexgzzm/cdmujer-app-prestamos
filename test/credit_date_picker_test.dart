@@ -4,6 +4,11 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('parses the displayed date for the API payload', () {
+    expect(parseCreditDate('09/09/2026'), DateTime.utc(2026, 9, 9));
+    expect(parseCreditDate('31/02/2026'), isNull);
+  });
+
   testWidgets('writes the selected date in dd/MM/yyyy format',
       (WidgetTester tester) async {
     final TextEditingController controller = TextEditingController();

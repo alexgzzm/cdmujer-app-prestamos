@@ -6,6 +6,7 @@ import 'package:cdmujer_app_prestamos/features/auth/presentation/providers/auth_
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/attachment_upload_result.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/city_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/ine_extracted_data.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_creation.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_group_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_information_validation.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_route_option.dart';
@@ -13,24 +14,27 @@ import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/state_
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/attachment_upload_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/cities_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/ine_extraction_exception.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/loan_creation_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/loan_information_validation_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/groups_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/routes_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/states_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/attachment_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/city_providers.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_creation_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_group_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_information_validation_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_route_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/state_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/utils/ine_form_populator.dart';
-import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/identity_attachment_buttons.dart';
-import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/credit_date_picker.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/city_dropdown.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/credit_date_picker.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/currency_amount_field.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/identity_attachment_buttons.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/loan_group_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/loan_route_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/responsive_form_fields.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/save_credit_button.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/state_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -173,6 +177,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
   bool _isLoadingStates = false;
   bool _isLoadingClientCities = false;
   bool _isLoadingCosignerCities = false;
+  bool _isSaving = false;
   bool _hasLoadedRoutes = false;
   bool _hasLoadedStates = false;
   int _currentStep = 0;
@@ -342,6 +347,8 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
           lastStep: _stepTitles.length - 1,
           onBack: _previousStep,
           onNext: _nextStep,
+          isSaving: _isSaving,
+          onSave: _saveCredit,
         ),
       ],
     );
@@ -416,6 +423,169 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
         setState(() => _isLoadingRoutes = false);
       }
     }
+  }
+
+  Future<void> _saveCredit() async {
+    if (_isSaving) {
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      final AuthSession? session = ref.read(authControllerProvider).whenOrNull(
+            data: (AuthSession? value) => value,
+          );
+      if (session == null) {
+        throw const LoanCreationException(
+          'La sesión no está disponible. Inicia sesión nuevamente.',
+        );
+      }
+      final LoanCreationResult result =
+          await ref.read(loanCreationRepositoryProvider).create(
+                data: _buildLoanCreationData(),
+                token: session.token,
+              );
+      if (!mounted) {
+        return;
+      }
+      if (!result.status || result.id == null) {
+        await _showLoanCreationMessage(
+          title: 'No fue posible guardar el crédito',
+          message: result.message,
+        );
+        return;
+      }
+      await _showLoanCreationMessage(
+        title: 'Crédito guardado',
+        message: '${result.message}\nNúmero de préstamo: ${result.id}',
+      );
+    } on LoanCreationException catch (error) {
+      if (mounted) {
+        await _showLoanCreationMessage(
+          title: 'No fue posible guardar el crédito',
+          message: error.message,
+        );
+      }
+    } on Object {
+      if (mounted) {
+        await _showLoanCreationMessage(
+          title: 'No fue posible guardar el crédito',
+          message: 'Ocurrió un error al guardar el crédito.',
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  LoanCreationData _buildLoanCreationData() {
+    final DateTime? date = parseCreditDate(_creditControllers['date']!.text);
+    final DateTime? firstPaymentDate =
+        parseCreditDate(_creditControllers['firstPaymentDate']!.text);
+    final double? ammount =
+        double.tryParse(_creditControllers['ammount']!.text);
+    final int idRoute = _requiredPositiveInt(
+      _creditControllers['idRoute']!.text,
+      'Selecciona una ruta.',
+    );
+    final int idGroup = _requiredPositiveInt(
+      _creditControllers['idGroup']!.text,
+      'Selecciona un grupo.',
+    );
+    if (date == null) {
+      throw const LoanCreationException('Selecciona la fecha del crédito.');
+    }
+    if (firstPaymentDate == null) {
+      throw const LoanCreationException(
+        'Selecciona la fecha del primer pago.',
+      );
+    }
+    if (ammount == null || ammount <= 0) {
+      throw const LoanCreationException('Captura un monto válido.');
+    }
+
+    return LoanCreationData(
+      idRoute: idRoute,
+      idGroup: idGroup,
+      client: _personDataFrom(_clientControllers),
+      cosigner: _personDataFrom(_cosignerControllers),
+      date: date,
+      ammount: ammount,
+      paymentMethod: _intValue(_creditControllers, 'paymentMethod'),
+      firstPaymentDate: firstPaymentDate,
+      beneficiary: _textValue(_creditControllers, 'beneficiary'),
+      relationship: _textValue(_creditControllers, 'relationship'),
+      comments: _textValue(_creditControllers, 'comments'),
+      attachments: List<int>.unmodifiable(_attachmentIds),
+    );
+  }
+
+  LoanPersonData _personDataFrom(
+    Map<String, TextEditingController> controllers,
+  ) {
+    return LoanPersonData(
+      lastname: _textValue(controllers, 'lastname'),
+      surname: _textValue(controllers, 'surname'),
+      name: _textValue(controllers, 'name'),
+      gender: _intValue(controllers, 'gender'),
+      street: _textValue(controllers, 'street'),
+      betweenStreets: _textValue(controllers, 'betweenStreets'),
+      extNum: _textValue(controllers, 'extNum'),
+      intNum: _textValue(controllers, 'intNum'),
+      suburb: _textValue(controllers, 'suburb'),
+      city: _intValue(controllers, 'city'),
+      state: _intValue(controllers, 'state'),
+      zipCode: _textValue(controllers, 'zipCode'),
+      phoneNumber: _textValue(controllers, 'phoneNumber'),
+      maritalStatus: _intValue(controllers, 'maritalStatus'),
+      rfc: _textValue(controllers, 'rfc'),
+      curp: _textValue(controllers, 'curp'),
+    );
+  }
+
+  String _textValue(
+    Map<String, TextEditingController> controllers,
+    String name,
+  ) {
+    return controllers[name]?.text.trim() ?? '';
+  }
+
+  int _intValue(
+    Map<String, TextEditingController> controllers,
+    String name,
+  ) {
+    return int.tryParse(_textValue(controllers, name)) ?? 0;
+  }
+
+  int _requiredPositiveInt(String value, String message) {
+    final int? parsed = int.tryParse(value);
+    if (parsed == null || parsed <= 0) {
+      throw LoanCreationException(message);
+    }
+    return parsed;
+  }
+
+  Future<void> _showLoanCreationMessage({
+    required String title,
+    required String message,
+  }) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Aceptar'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _onClientCurpChanged() {
@@ -973,12 +1143,16 @@ class _WizardNavigation extends StatelessWidget {
     required this.lastStep,
     required this.onBack,
     required this.onNext,
+    required this.isSaving,
+    required this.onSave,
   });
 
   final int currentStep;
   final int lastStep;
   final VoidCallback onBack;
   final VoidCallback onNext;
+  final bool isSaving;
+  final Future<void> Function() onSave;
 
   @override
   Widget build(BuildContext context) {
@@ -1010,6 +1184,8 @@ class _WizardNavigation extends StatelessWidget {
                       label: const Text('Siguiente'),
                     ),
                   ),
+                if (currentStep == lastStep)
+                  SaveCreditButton(isSaving: isSaving, onSave: onSave),
               ],
             ),
           ),

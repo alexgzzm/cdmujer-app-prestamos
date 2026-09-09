@@ -1,0 +1,52 @@
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_creation.dart';
+
+class LoanCreationRequestModel {
+  const LoanCreationRequestModel(this.data);
+
+  final LoanCreationData data;
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'id': 0,
+      'idRoute': data.idRoute,
+      'idGroup': data.idGroup,
+      'client': _personToJson(data.client),
+      'cosigner': _personToJson(data.cosigner),
+      'date': data.date.toUtc().toIso8601String(),
+      'ammount': data.ammount,
+      'paymentMethod': data.paymentMethod,
+      'firstPaymentDate': data.firstPaymentDate.toUtc().toIso8601String(),
+      'globalInterest': 0,
+      'iva': 0,
+      'insurance': 0,
+      'beneficiary': data.beneficiary,
+      'relationship': data.relationship,
+      'comments': data.comments,
+      'attachments': data.attachments,
+    };
+  }
+
+  Map<String, dynamic> _personToJson(LoanPersonData person) {
+    return <String, dynamic>{
+      'id': 0,
+      'client': 0,
+      'lastname': person.lastname,
+      'surname': person.surname,
+      'name': person.name,
+      'gender': person.gender,
+      'street': person.street,
+      'betweenStreets': person.betweenStreets,
+      'extNum': person.extNum,
+      'intNum': person.intNum,
+      'suburb': person.suburb,
+      'city': person.city,
+      'state': person.state,
+      'zipCode': person.zipCode,
+      'phoneNumber': person.phoneNumber,
+      'maritalStatus': person.maritalStatus,
+      'rfc': person.rfc,
+      'curp': person.curp,
+      'ine': '',
+    };
+  }
+}

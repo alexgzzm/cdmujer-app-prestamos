@@ -33,7 +33,8 @@ class CreditDatePicker extends StatelessWidget {
   }
 
   Future<void> _selectDate(BuildContext context) async {
-    final DateTime initialDate = _parseDate(controller.text) ?? DateTime.now();
+    final DateTime initialDate =
+        parseCreditDate(controller.text) ?? DateTime.now();
     final DateTime? selectedDate = await (pickDate?.call(context, initialDate) ??
         showDatePicker(
           context: context,
@@ -46,27 +47,27 @@ class CreditDatePicker extends StatelessWidget {
       controller.text = formatCreditDate(selectedDate);
     }
   }
-
-  DateTime? _parseDate(String value) {
-    final List<String> parts = value.split('/');
-    if (parts.length != 3) {
-      return null;
-    }
-    final int? day = int.tryParse(parts[0]);
-    final int? month = int.tryParse(parts[1]);
-    final int? year = int.tryParse(parts[2]);
-    if (day == null || month == null || year == null) {
-      return null;
-    }
-    final DateTime date = DateTime(year, month, day);
-    return date.day == day && date.month == month && date.year == year
-        ? date
-        : null;
-  }
 }
 
 String formatCreditDate(DateTime date) {
   final String day = date.day.toString().padLeft(2, '0');
   final String month = date.month.toString().padLeft(2, '0');
   return '$day/$month/${date.year}';
+}
+
+DateTime? parseCreditDate(String value) {
+  final List<String> parts = value.split('/');
+  if (parts.length != 3) {
+    return null;
+  }
+  final int? day = int.tryParse(parts[0]);
+  final int? month = int.tryParse(parts[1]);
+  final int? year = int.tryParse(parts[2]);
+  if (day == null || month == null || year == null) {
+    return null;
+  }
+  final DateTime date = DateTime.utc(year, month, day);
+  return date.day == day && date.month == month && date.year == year
+      ? date
+      : null;
 }

@@ -1,0 +1,72 @@
+import 'package:cdmujer_app_prestamos/features/new_credit/data/models/loan_creation_request_model.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/data/models/loan_creation_response_model.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_creation.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  test('serializes the complete loan creation contract', () {
+    final Map<String, dynamic> json =
+        LoanCreationRequestModel(_sampleLoan()).toJson();
+
+    expect(json['idRoute'], 122);
+    expect(json['idGroup'], 1302);
+    expect(json['ammount'], 12500.50);
+    expect(json['date'], '2026-09-09T00:00:00.000Z');
+    expect(json['firstPaymentDate'], '2026-10-09T00:00:00.000Z');
+    expect(json['globalInterest'], 0);
+    expect(json['iva'], 0);
+    expect(json['insurance'], 0);
+    expect(json['attachments'], <int>[11, 12]);
+    expect((json['client'] as Map<String, dynamic>)['ine'], '');
+    expect((json['cosigner'] as Map<String, dynamic>)['city'], 19001);
+  });
+
+  test('maps the generated loan number from a successful response', () {
+    final LoanCreationResult result = LoanCreationResponseModel.fromJson(
+      <String, dynamic>{
+        'id': 20763,
+        'status': true,
+        'message': 'Prestamo creado exitosamente',
+        'messageType': 'Success',
+      },
+    ).toEntity();
+
+    expect(result.id, 20763);
+    expect(result.status, isTrue);
+  });
+}
+
+LoanCreationData _sampleLoan() {
+  const LoanPersonData person = LoanPersonData(
+    lastname: 'García',
+    surname: 'Méndez',
+    name: 'María',
+    gender: 2,
+    street: 'Reforma',
+    betweenStreets: 'Juárez y Morelos',
+    extNum: '10',
+    intNum: '',
+    suburb: 'Centro',
+    city: 19001,
+    state: 19,
+    zipCode: '64000',
+    phoneNumber: '5555555555',
+    maritalStatus: 1,
+    rfc: 'GAMG700626ABC',
+    curp: 'GAMG700626MMNLRL04',
+  );
+  return LoanCreationData(
+    idRoute: 122,
+    idGroup: 1302,
+    client: person,
+    cosigner: person,
+    date: DateTime.utc(2026, 9, 9),
+    ammount: 12500.50,
+    paymentMethod: 1,
+    firstPaymentDate: DateTime.utc(2026, 10, 9),
+    beneficiary: 'Beneficiario',
+    relationship: 'Hijo',
+    comments: 'Sin comentarios',
+    attachments: const <int>[11, 12],
+  );
+}

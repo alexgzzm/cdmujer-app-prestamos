@@ -4,4 +4,6 @@ abstract final class ApiConfig {
       Uri.parse('https://localhost:7127/api/Attachments');
   static final Uri ineExtractionEndpoint =
       Uri.parse('https://localhost:7127/api/Customers/ExtractDataFromIne');
+  static final Uri routesEndpoint =
+      Uri.parse('https://localhost:7127/api/Routes');
 }

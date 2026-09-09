@@ -18,11 +18,13 @@ class ResponsiveFormFields extends StatelessWidget {
   const ResponsiveFormFields({
     required this.fields,
     required this.controllers,
+    this.fieldOverrides = const <String, Widget>{},
     super.key,
   });
 
   final List<CreditFieldDefinition> fields;
   final Map<String, TextEditingController> controllers;
+  final Map<String, Widget> fieldOverrides;
 
   @override
   Widget build(BuildContext context) {
@@ -40,21 +42,22 @@ class ResponsiveFormFields extends StatelessWidget {
           children: fields.map((CreditFieldDefinition field) {
             return SizedBox(
               width: fieldWidth,
-              child: TextFormField(
-                controller: controllers[field.name],
-                keyboardType: field.maxLines > 1
-                    ? TextInputType.multiline
-                    : field.keyboardType,
-                maxLines: field.maxLines,
-                textInputAction: field.maxLines > 1
-                    ? TextInputAction.newline
-                    : TextInputAction.next,
-                decoration: InputDecoration(
-                  labelText: field.label,
-                  border: const OutlineInputBorder(),
-                  alignLabelWithHint: field.maxLines > 1,
-                ),
-              ),
+              child: fieldOverrides[field.name] ??
+                  TextFormField(
+                    controller: controllers[field.name],
+                    keyboardType: field.maxLines > 1
+                        ? TextInputType.multiline
+                        : field.keyboardType,
+                    maxLines: field.maxLines,
+                    textInputAction: field.maxLines > 1
+                        ? TextInputAction.newline
+                        : TextInputAction.next,
+                    decoration: InputDecoration(
+                      labelText: field.label,
+                      border: const OutlineInputBorder(),
+                      alignLabelWithHint: field.maxLines > 1,
+                    ),
+                  ),
             );
           }).toList(),
         );

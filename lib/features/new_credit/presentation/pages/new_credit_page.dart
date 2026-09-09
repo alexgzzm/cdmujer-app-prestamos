@@ -4,11 +4,15 @@ import 'package:cdmujer_app_prestamos/features/auth/domain/entities/auth_session
 import 'package:cdmujer_app_prestamos/features/auth/presentation/providers/auth_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/attachment_upload_result.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/ine_extracted_data.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_route_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/attachment_upload_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/ine_extraction_exception.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/routes_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/attachment_providers.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_route_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/utils/ine_form_populator.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/identity_attachment_buttons.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/loan_route_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/responsive_form_fields.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -165,6 +169,10 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
   final List<int> _attachmentIds = <int>[];
   final Map<String, int> _attachmentIdsBySlot = <String, int>{};
   final Set<String> _uploadingSlots = <String>{};
+  List<LoanRouteOption> _routes = <LoanRouteOption>[];
+  String? _routesErrorMessage;
+  bool _isLoadingRoutes = false;
+  bool _hasLoadedRoutes = false;
   int _currentStep = 0;
 
   @override
@@ -247,6 +255,15 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
               _FormStep(
                 fields: _creditFields,
                 controllers: _creditControllers,
+                fieldOverrides: <String, Widget>{
+                  'idRoute': LoanRouteDropdown(
+                    controller: _creditControllers['idRoute']!,
+                    routes: _routes,
+                    isLoading: _isLoadingRoutes,
+                    errorMessage: _routesErrorMessage,
+                    onRetry: () => _loadRoutes(force: true),
+                  ),
+                },
               ),
             ],
           ),
@@ -273,12 +290,62 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
   void _nextStep() {
     if (_currentStep < _stepTitles.length - 1) {
       setState(() => _currentStep++);
+      if (_currentStep == _stepTitles.length - 1) {
+        _loadRoutes();
+      }
     }
   }
 
   void _previousStep() {
     if (_currentStep > 0) {
       setState(() => _currentStep--);
+    }
+  }
+
+  Future<void> _loadRoutes({bool force = false}) async {
+    if (_isLoadingRoutes || (!force && _hasLoadedRoutes)) {
+      return;
+    }
+
+    setState(() {
+      _isLoadingRoutes = true;
+      _routesErrorMessage = null;
+    });
+    try {
+      final AuthSession? session = ref.read(authControllerProvider).whenOrNull(
+            data: (AuthSession? value) => value,
+          );
+      if (session == null) {
+        throw const RoutesException(
+          'La sesión no está disponible. Inicia sesión nuevamente.',
+        );
+      }
+
+      final List<LoanRouteOption> routes =
+          await ref.read(loanRouteRepositoryProvider).getRoutes(
+                token: session.token,
+              );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _routes = routes;
+        _hasLoadedRoutes = true;
+      });
+    } on RoutesException catch (error) {
+      if (mounted) {
+        setState(() => _routesErrorMessage = error.message);
+      }
+    } on Object {
+      if (mounted) {
+        setState(() {
+          _routesErrorMessage = 'No fue posible cargar las rutas.';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingRoutes = false);
+      }
     }
   }
 
@@ -482,11 +549,13 @@ class _FormStep extends StatelessWidget {
     required this.fields,
     required this.controllers,
     this.leading,
+    this.fieldOverrides = const <String, Widget>{},
   });
 
   final List<CreditFieldDefinition> fields;
   final Map<String, TextEditingController> controllers;
   final Widget? leading;
+  final Map<String, Widget> fieldOverrides;
 
   @override
   Widget build(BuildContext context) {
@@ -506,6 +575,7 @@ class _FormStep extends StatelessWidget {
                 ResponsiveFormFields(
                   fields: fields,
                   controllers: controllers,
+                  fieldOverrides: fieldOverrides,
                 ),
               ],
             ),

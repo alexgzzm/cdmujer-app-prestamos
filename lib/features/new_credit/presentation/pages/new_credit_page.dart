@@ -4,14 +4,18 @@ import 'package:cdmujer_app_prestamos/features/auth/domain/entities/auth_session
 import 'package:cdmujer_app_prestamos/features/auth/presentation/providers/auth_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/attachment_upload_result.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/ine_extracted_data.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_group_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_route_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/attachment_upload_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/ine_extraction_exception.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/groups_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/routes_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/attachment_providers.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_group_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_route_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/utils/ine_form_populator.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/identity_attachment_buttons.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/loan_group_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/loan_route_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/responsive_form_fields.dart';
 import 'package:flutter/material.dart';
@@ -169,8 +173,11 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
   final List<int> _attachmentIds = <int>[];
   final Map<String, int> _attachmentIdsBySlot = <String, int>{};
   final Set<String> _uploadingSlots = <String>{};
+  List<LoanGroupOption> _groups = <LoanGroupOption>[];
   List<LoanRouteOption> _routes = <LoanRouteOption>[];
+  String? _groupsErrorMessage;
   String? _routesErrorMessage;
+  bool _isLoadingGroups = false;
   bool _isLoadingRoutes = false;
   bool _hasLoadedRoutes = false;
   int _currentStep = 0;
@@ -262,6 +269,16 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
                     isLoading: _isLoadingRoutes,
                     errorMessage: _routesErrorMessage,
                     onRetry: () => _loadRoutes(force: true),
+                    onChanged: _onRouteChanged,
+                  ),
+                  'idGroup': LoanGroupDropdown(
+                    controller: _creditControllers['idGroup']!,
+                    groups: _groups,
+                    isLoading: _isLoadingGroups,
+                    errorMessage: _groupsErrorMessage,
+                    isRouteSelected:
+                        _creditControllers['idRoute']!.text.isNotEmpty,
+                    onRetry: _loadGroupsForSelectedRoute,
                   ),
                 },
               ),
@@ -345,6 +362,68 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
     } finally {
       if (mounted) {
         setState(() => _isLoadingRoutes = false);
+      }
+    }
+  }
+
+  void _onRouteChanged(String? routeId) {
+    final String selectedRouteId = routeId ?? '';
+    if (_creditControllers['idRoute']!.text == selectedRouteId) {
+      return;
+    }
+    setState(() {
+      _creditControllers['idRoute']!.text = selectedRouteId;
+      _creditControllers['idGroup']!.clear();
+      _groups = <LoanGroupOption>[];
+      _groupsErrorMessage = null;
+    });
+    if (selectedRouteId.isNotEmpty) {
+      _loadGroups(routeId: selectedRouteId);
+    }
+  }
+
+  Future<void> _loadGroupsForSelectedRoute() {
+    final String routeId = _creditControllers['idRoute']!.text;
+    return routeId.isEmpty ? Future<void>.value() : _loadGroups(routeId: routeId);
+  }
+
+  Future<void> _loadGroups({required String routeId}) async {
+    setState(() {
+      _isLoadingGroups = true;
+      _groupsErrorMessage = null;
+    });
+    try {
+      final AuthSession? session = ref.read(authControllerProvider).whenOrNull(
+            data: (AuthSession? value) => value,
+          );
+      if (session == null) {
+        throw const GroupsException(
+          'La sesión no está disponible. Inicia sesión nuevamente.',
+        );
+      }
+
+      final List<LoanGroupOption> groups =
+          await ref.read(loanGroupRepositoryProvider).getGroups(
+                routeId: routeId,
+                token: session.token,
+              );
+      if (!mounted || _creditControllers['idRoute']!.text != routeId) {
+        return;
+      }
+      setState(() => _groups = groups);
+    } on GroupsException catch (error) {
+      if (mounted && _creditControllers['idRoute']!.text == routeId) {
+        setState(() => _groupsErrorMessage = error.message);
+      }
+    } on Object {
+      if (mounted && _creditControllers['idRoute']!.text == routeId) {
+        setState(() {
+          _groupsErrorMessage = 'No fue posible cargar los grupos.';
+        });
+      }
+    } finally {
+      if (mounted && _creditControllers['idRoute']!.text == routeId) {
+        setState(() => _isLoadingGroups = false);
       }
     }
   }

@@ -6,4 +6,6 @@ abstract final class ApiConfig {
       Uri.parse('https://localhost:7127/api/Customers/ExtractDataFromIne');
   static final Uri routesEndpoint =
       Uri.parse('https://localhost:7127/api/Routes');
+  static final Uri groupsEndpoint =
+      Uri.parse('https://localhost:7127/api/Groups');
 }

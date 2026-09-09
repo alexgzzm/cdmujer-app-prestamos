@@ -1,49 +1,46 @@
-import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_route_option.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_group_option.dart';
 import 'package:flutter/material.dart';
 
-class LoanRouteDropdown extends StatelessWidget {
-  const LoanRouteDropdown({
+class LoanGroupDropdown extends StatelessWidget {
+  const LoanGroupDropdown({
     required this.controller,
-    required this.routes,
+    required this.groups,
     required this.isLoading,
     required this.errorMessage,
+    required this.isRouteSelected,
     required this.onRetry,
-    required this.onChanged,
     super.key,
   });
 
   final TextEditingController controller;
-  final List<LoanRouteOption> routes;
+  final List<LoanGroupOption> groups;
   final bool isLoading;
   final String? errorMessage;
+  final bool isRouteSelected;
   final VoidCallback onRetry;
-  final ValueChanged<String?> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    final bool hasSelectedRoute =
-        routes.any((LoanRouteOption route) => route.value == controller.text);
-    final String? selectedValue = hasSelectedRoute ? controller.text : null;
+    final bool hasSelectedGroup =
+        groups.any((LoanGroupOption group) => group.value == controller.text);
+    final String? selectedValue = hasSelectedGroup ? controller.text : null;
+    final bool isEnabled =
+        isRouteSelected && !isLoading && errorMessage == null && groups.isNotEmpty;
 
     return DropdownButtonFormField<String>(
       value: selectedValue,
       isExpanded: true,
-      onChanged: isLoading || errorMessage != null || routes.isEmpty
-          ? null
-          : onChanged,
-      items: routes
+      onChanged: isEnabled ? (String? value) => controller.text = value ?? '' : null,
+      items: groups
           .map(
-            (LoanRouteOption route) => DropdownMenuItem<String>(
-              value: route.value,
-              child: Text(
-                route.description,
-                overflow: TextOverflow.ellipsis,
-              ),
+            (LoanGroupOption group) => DropdownMenuItem<String>(
+              value: group.value,
+              child: Text(group.description, overflow: TextOverflow.ellipsis),
             ),
           )
           .toList(growable: false),
       decoration: InputDecoration(
-        labelText: 'Ruta',
+        labelText: 'Grupo',
         border: const OutlineInputBorder(),
         errorText: errorMessage,
         suffixIcon: isLoading
@@ -64,11 +61,13 @@ class LoanRouteDropdown extends StatelessWidget {
                 : null,
       ),
       hint: Text(
-        isLoading
-            ? 'Cargando rutas...'
-            : routes.isEmpty
-                ? 'No hay rutas disponibles'
-                : 'Selecciona una ruta',
+        !isRouteSelected
+            ? 'Selecciona una ruta primero'
+            : isLoading
+                ? 'Cargando grupos...'
+                : groups.isEmpty
+                    ? 'No hay grupos disponibles'
+                    : 'Selecciona un grupo',
       ),
     );
   }

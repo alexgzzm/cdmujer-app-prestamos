@@ -459,6 +459,9 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
         title: 'Crédito guardado',
         message: '${result.message}\nNúmero de préstamo: ${result.id}',
       );
+      if (mounted) {
+        context.go('/home');
+      }
     } on LoanCreationException catch (error) {
       if (mounted) {
         await _showLoanCreationMessage(

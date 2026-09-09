@@ -395,7 +395,9 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
       if (!mounted) {
         return;
       }
-      IneFormPopulator.apply(data: extractedData, controllers: target);
+      setState(() {
+        IneFormPopulator.apply(data: extractedData, controllers: target);
+      });
     } on IneExtractionException {
       if (mounted) {
         await _showIneExtractionError();

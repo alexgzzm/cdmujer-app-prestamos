@@ -1,24 +1,38 @@
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/ine_extracted_data.dart';
 
 class IneExtractionResponseModel {
-  IneExtractionResponseModel.fromJson(Map<String, dynamic> json)
-      : status = json['status'] as bool? ?? true,
-        data = _parseData(_selectPayload(json));
+  const IneExtractionResponseModel._({
+    required this.status,
+    required this.data,
+  });
+
+  factory IneExtractionResponseModel.fromJson(Map<String, dynamic> json) {
+    return IneExtractionResponseModel._(
+      status: json['status'] as bool? ?? true,
+      data: _parseData(
+        payload: _selectPayload(json),
+        fullResponse: json,
+      ),
+    );
+  }
 
   final bool status;
   final IneExtractedData data;
 
   IneExtractedData toEntity() => data;
 
-  static IneExtractedData _parseData(Map<String, dynamic> json) {
+  static IneExtractedData _parseData({
+    required Map<String, dynamic> payload,
+    required Map<String, dynamic> fullResponse,
+  }) {
     return IneExtractedData(
-      lastname: _readString(json, 'apellidoPaterno'),
-      surname: _readString(json, 'apellidoMaterno'),
-      name: _readString(json, 'nombres'),
-      street: _readString(json, 'calle'),
-      suburb: _readString(json, 'colonia'),
-      zipCode: _readString(json, 'codigoPostal'),
-      curp: _readString(json, 'curp'),
+      lastname: _readString(payload, 'apellidoPaterno'),
+      surname: _readString(payload, 'apellidoMaterno'),
+      name: _readString(payload, 'nombres'),
+      street: _readString(payload, 'calle'),
+      suburb: _readString(payload, 'colonia'),
+      zipCode: _readString(payload, 'codigoPostal'),
+      curp: _findCurp(fullResponse),
     );
   }
 
@@ -33,14 +47,60 @@ class IneExtractionResponseModel {
   }
 
   static String? _readString(Map<String, dynamic> json, String expectedKey) {
-    final String normalizedExpectedKey = expectedKey.toLowerCase();
+    final String normalizedExpectedKey = _normalizeKey(expectedKey);
     for (final MapEntry<String, dynamic> entry in json.entries) {
-      if (entry.key.trim().toLowerCase() != normalizedExpectedKey) {
+      if (_normalizeKey(entry.key) != normalizedExpectedKey) {
         continue;
       }
-      final String value = entry.value?.toString().trim() ?? '';
-      return value.isEmpty ? null : value;
+      return _asNonEmptyString(entry.value);
     }
     return null;
   }
+
+  static String? _findCurp(Object? source) {
+    if (source is Map) {
+      for (final MapEntry<dynamic, dynamic> entry in source.entries) {
+        if (_normalizeKey(entry.key.toString()) == 'curp') {
+          final String? value = _asNonEmptyString(entry.value);
+          if (value != null) {
+            return value.toUpperCase();
+          }
+        }
+      }
+      for (final dynamic value in source.values) {
+        final String? curp = _findCurp(value);
+        if (curp != null) {
+          return curp;
+        }
+      }
+      return null;
+    }
+    if (source is Iterable) {
+      for (final dynamic value in source) {
+        final String? curp = _findCurp(value);
+        if (curp != null) {
+          return curp;
+        }
+      }
+      return null;
+    }
+    final String? value = _asNonEmptyString(source)?.toUpperCase();
+    if (value != null && _curpPattern.hasMatch(value)) {
+      return value;
+    }
+    return null;
+  }
+
+  static String _normalizeKey(String key) {
+    return key.trim().toLowerCase().replaceAll(RegExp('[^a-z0-9]'), '');
+  }
+
+  static String? _asNonEmptyString(Object? value) {
+    final String text = value?.toString().trim() ?? '';
+    return text.isEmpty ? null : text;
+  }
+
+  static final RegExp _curpPattern = RegExp(
+    r'^[A-Z]{4}\d{6}[HM][A-Z]{5}[A-Z0-9]\d$',
+  );
 }

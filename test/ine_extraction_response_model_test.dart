@@ -33,4 +33,30 @@ void main() {
 
     expect(result.toEntity().curp, 'GOME940127HNLNRRO9');
   });
+
+  test('finds CURP in the complete response even when it is nested', () {
+    final IneExtractionResponseModel result =
+        IneExtractionResponseModel.fromJson(<String, dynamic>{
+      'data': <String, dynamic>{
+        'nombres': 'ERICK ALEJANDRO',
+      },
+      'document': <String, dynamic>{
+        'curp': 'GOME940127HNLNRRO9',
+      },
+    });
+
+    expect(result.toEntity().name, 'ERICK ALEJANDRO');
+    expect(result.toEntity().curp, 'GOME940127HNLNRRO9');
+  });
+
+  test('recognizes a valid CURP value if the service changes its key', () {
+    final IneExtractionResponseModel result =
+        IneExtractionResponseModel.fromJson(<String, dynamic>{
+      'data': <String, dynamic>{
+        'identificadorPersonal': 'GOME940127HNLNRRO9',
+      },
+    });
+
+    expect(result.toEntity().curp, 'GOME940127HNLNRRO9');
+  });
 }

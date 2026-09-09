@@ -40,6 +40,7 @@ class CreditDatePicker extends StatelessWidget {
           initialDate: initialDate,
           firstDate: DateTime(2000),
           lastDate: DateTime(2100),
+          locale: const Locale('es', 'MX'),
         ));
     if (selectedDate != null) {
       controller.text = formatCreditDate(selectedDate);

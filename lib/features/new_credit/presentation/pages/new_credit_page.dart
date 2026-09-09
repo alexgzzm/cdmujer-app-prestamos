@@ -291,7 +291,6 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
       final XFile? photo = await _imagePicker.pickImage(
         source: ImageSource.camera,
         preferredCameraDevice: CameraDevice.rear,
-        imageQuality: 85,
       );
       if (photo == null || !mounted) {
         return;

@@ -55,11 +55,6 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
 
   static const List<CreditFieldDefinition> _personFields =
       <CreditFieldDefinition>[
-    CreditFieldDefinition(
-      name: 'client',
-      label: 'Número de cliente',
-      keyboardType: TextInputType.number,
-    ),
     CreditFieldDefinition(name: 'lastname', label: 'Apellido paterno'),
     CreditFieldDefinition(name: 'surname', label: 'Apellido materno'),
     CreditFieldDefinition(name: 'name', label: 'Nombre'),

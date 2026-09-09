@@ -15,6 +15,7 @@ import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_route_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/utils/ine_form_populator.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/identity_attachment_buttons.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/credit_date_picker.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/loan_group_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/loan_route_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/responsive_form_fields.dart';
@@ -279,6 +280,14 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
                     isRouteSelected:
                         _creditControllers['idRoute']!.text.isNotEmpty,
                     onRetry: _loadGroupsForSelectedRoute,
+                  ),
+                  'date': CreditDatePicker(
+                    controller: _creditControllers['date']!,
+                    label: 'Fecha',
+                  ),
+                  'firstPaymentDate': CreditDatePicker(
+                    controller: _creditControllers['firstPaymentDate']!,
+                    label: 'Fecha del primer pago',
                   ),
                 },
               ),

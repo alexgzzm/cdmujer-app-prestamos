@@ -16,6 +16,7 @@ import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/utils/ine_form_populator.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/identity_attachment_buttons.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/credit_date_picker.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/currency_amount_field.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/loan_group_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/loan_route_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/responsive_form_fields.dart';
@@ -155,6 +156,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
   late final Map<String, TextEditingController> _clientControllers;
   late final Map<String, TextEditingController> _cosignerControllers;
   late final Map<String, TextEditingController> _creditControllers;
+  final TextEditingController _amountDisplayController = TextEditingController();
   final ImagePicker _imagePicker = ImagePicker();
   final List<int> _attachmentIds = <int>[];
   final Map<String, int> _attachmentIdsBySlot = <String, int>{};
@@ -182,6 +184,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
       ..._clientControllers.values,
       ..._cosignerControllers.values,
       ..._creditControllers.values,
+      _amountDisplayController,
     ]) {
       controller.dispose();
     }
@@ -273,6 +276,12 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
                   'firstPaymentDate': CreditDatePicker(
                     controller: _creditControllers['firstPaymentDate']!,
                     label: 'Fecha del primer pago',
+                  ),
+                  'ammount': CurrencyAmountField(
+                    controller: _amountDisplayController,
+                    onDecimalChanged: (String value) {
+                      _creditControllers['ammount']!.text = value;
+                    },
                   ),
                 },
               ),

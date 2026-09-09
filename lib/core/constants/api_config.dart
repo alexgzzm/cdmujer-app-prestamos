@@ -8,4 +8,6 @@ abstract final class ApiConfig {
       Uri.parse('https://localhost:7127/api/Routes');
   static final Uri groupsEndpoint =
       Uri.parse('https://localhost:7127/api/Groups');
+  static final Uri statesEndpoint =
+      Uri.parse('https://localhost:7127/api/Locations/GetStates');
 }

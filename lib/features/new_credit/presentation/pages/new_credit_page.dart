@@ -89,18 +89,8 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
       keyboardType: TextInputType.phone,
     ),
     CreditFieldDefinition(
-      name: 'phoneNumber2',
-      label: 'Teléfono secundario',
-      keyboardType: TextInputType.phone,
-    ),
-    CreditFieldDefinition(
       name: 'mobileNumber',
       label: 'Celular',
-      keyboardType: TextInputType.phone,
-    ),
-    CreditFieldDefinition(
-      name: 'mobileNumber2',
-      label: 'Celular secundario',
       keyboardType: TextInputType.phone,
     ),
     CreditFieldDefinition(
@@ -110,9 +100,6 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
     ),
     CreditFieldDefinition(name: 'rfc', label: 'RFC'),
     CreditFieldDefinition(name: 'curp', label: 'CURP'),
-    CreditFieldDefinition(name: 'ine', label: 'INE'),
-    CreditFieldDefinition(name: 'passport', label: 'Pasaporte'),
-    CreditFieldDefinition(name: 'originCountry', label: 'País de origen'),
   ];
 
   static const List<CreditFieldDefinition> _creditFields =

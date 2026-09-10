@@ -1,4 +1,5 @@
 import 'package:cdmujer_app_prestamos/features/loan_search/domain/entities/customer_lookup_result.dart';
+import 'package:cdmujer_app_prestamos/features/loan_search/domain/entities/customer_name_match.dart';
 import 'package:cdmujer_app_prestamos/features/loan_search/presentation/pages/loan_search_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -104,6 +105,96 @@ void main() {
     );
     expect(page.applicationType, 3);
   });
+
+  testWidgets('requires all three name fields for a name search',
+      (WidgetTester tester) async {
+    bool searched = false;
+    await tester.pumpWidget(_testApp(LoanSearchPage(
+      applicationType: LoanSearchPage.renewalType,
+      lookupCustomersByName: ({
+        required String name,
+        required String lastname,
+        required String surname,
+      }) async {
+        searched = true;
+        return const <CustomerNameMatch>[];
+      },
+    )));
+
+    await tester.enterText(
+      find.byKey(const Key('loan-name-field')),
+      'Teresa',
+    );
+    await tester.ensureVisible(find.byKey(const Key('loan-search-button')));
+    await tester.tap(find.byKey(const Key('loan-search-button')));
+    await tester.pump();
+
+    expect(searched, isFalse);
+    expect(
+      find.text(
+        'Para buscar por nombre, captura nombres, apellido paterno y apellido materno.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('shows name matches and loads the selected customer',
+      (WidgetTester tester) async {
+    CustomerLookupResult? selectedCustomer;
+    await tester.pumpWidget(_testApp(LoanSearchPage(
+      applicationType: LoanSearchPage.renewalType,
+      lookupCustomersByName: ({
+        required String name,
+        required String lastname,
+        required String surname,
+      }) async {
+        expect(name, 'TERESA');
+        expect(lastname, 'FLORES');
+        expect(surname, 'AVIÑA');
+        return const <CustomerNameMatch>[_nameMatch];
+      },
+      lookupCustomer: ({required String loanNumber, required String curp}) async {
+        expect(loanNumber, '');
+        expect(curp, _nameMatch.curp);
+        return _customer;
+      },
+      onCustomerSelected: (CustomerLookupResult customer) {
+        selectedCustomer = customer;
+      },
+    )));
+
+    await tester.enterText(
+      find.byKey(const Key('loan-name-field')),
+      'teresa',
+    );
+    await tester.enterText(
+      find.byKey(const Key('loan-lastname-field')),
+      'flores',
+    );
+    await tester.enterText(
+      find.byKey(const Key('loan-surname-field')),
+      'aviña',
+    );
+    await tester.ensureVisible(find.byKey(const Key('loan-search-button')));
+    await tester.tap(find.byKey(const Key('loan-search-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('TERESA FLORES AVIÑA'), findsOneWidget);
+    expect(find.text('CURP: FOAT641212MMNLVR02'), findsOneWidget);
+    expect(find.text('Último préstamo: 105'), findsOneWidget);
+    expect(find.text('Ruta: RUTA 1'), findsOneWidget);
+    expect(find.text('Grupo: GRUPO A'), findsOneWidget);
+
+    final Finder matchCard = find.byKey(const Key('customer-match-11'));
+    await tester.ensureVisible(matchCard);
+    await tester.tap(matchCard);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+
+    expect(selectedCustomer?.id, _customer.id);
+  });
 }
 
 Widget _testApp(LoanSearchPage page) {
@@ -136,4 +227,13 @@ const CustomerLookupResult _customer = CustomerLookupResult(
   phoneNumber: null,
   maritalStatus: 0,
   curp: 'AATM980401MMNLLY05',
+);
+
+const CustomerNameMatch _nameMatch = CustomerNameMatch(
+  id: 11,
+  name: 'TERESA FLORES AVIÑA',
+  curp: 'FOAT641212MMNLVR02',
+  lastLoan: '105',
+  loanRoute: 'RUTA 1',
+  loanGroup: 'GRUPO A',
 );

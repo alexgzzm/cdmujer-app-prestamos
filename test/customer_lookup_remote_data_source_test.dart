@@ -27,6 +27,35 @@ void main() {
     expect(response.customer.id, 84542);
     expect(response.customer.curp, 'AATM980401MMNLLY05');
   });
+
+  test('searches customers by full name and sends the bearer token', () async {
+    final MockClient client = MockClient((http.Request request) async {
+      expect(request.method, 'GET');
+      expect(
+        request.url.path,
+        '/api/Customers/SearchCustomersByName',
+      );
+      expect(request.url.queryParameters, <String, String>{
+        'name': 'TERESA',
+        'lastname': 'FLORES',
+        'surname': 'AVIÑA',
+      });
+      expect(request.headers['Authorization'], 'Bearer session-token');
+      return http.Response(_nameSearchResponseBody, 200);
+    });
+
+    final response =
+        await CustomerLookupRemoteDataSource(client: client).searchByName(
+      name: 'TERESA',
+      lastname: 'FLORES',
+      surname: 'AVIÑA',
+      token: 'session-token',
+    );
+
+    expect(response, hasLength(1));
+    expect(response.single.customer.name, 'TERESA FLORES AVIÑA');
+    expect(response.single.customer.curp, 'FOAT641212MMNLVR02');
+  });
 }
 
 const String _responseBody = '''
@@ -48,4 +77,17 @@ const String _responseBody = '''
   "maritalStatus": 0,
   "curp": "AATM980401MMNLLY05"
 }
+''';
+
+const String _nameSearchResponseBody = '''
+[
+  {
+    "id": 11,
+    "name": "TERESA FLORES AVIÑA",
+    "curp": "FOAT641212MMNLVR02",
+    "lastLoan": "105",
+    "loanRoute": "RUTA 1",
+    "loanGroup": "GRUPO A"
+  }
+]
 ''';

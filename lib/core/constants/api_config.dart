@@ -19,4 +19,7 @@ abstract final class ApiConfig {
   static final Uri customerFromLoanOrCurpEndpoint = Uri.parse(
     'https://localhost:7127/api/Customers/GetCustomerFromLoanOrCurp',
   );
+  static final Uri customersByNameEndpoint = Uri.parse(
+    'https://localhost:7127/api/Customers/SearchCustomersByName',
+  );
 }

@@ -1,6 +1,7 @@
 import 'package:cdmujer_app_prestamos/features/auth/domain/entities/auth_session.dart';
 import 'package:cdmujer_app_prestamos/features/auth/presentation/providers/auth_providers.dart';
 import 'package:cdmujer_app_prestamos/features/loan_search/domain/entities/customer_lookup_result.dart';
+import 'package:cdmujer_app_prestamos/features/loan_search/domain/entities/customer_name_match.dart';
 import 'package:cdmujer_app_prestamos/features/loan_search/domain/errors/customer_lookup_exception.dart';
 import 'package:cdmujer_app_prestamos/features/loan_search/presentation/providers/customer_lookup_providers.dart';
 import 'package:flutter/material.dart';
@@ -13,10 +14,17 @@ typedef CustomerLookupCallback = Future<CustomerLookupResult> Function({
   required String curp,
 });
 
+typedef CustomerNameLookupCallback = Future<List<CustomerNameMatch>> Function({
+  required String name,
+  required String lastname,
+  required String surname,
+});
+
 class LoanSearchPage extends ConsumerStatefulWidget {
   const LoanSearchPage({
     required this.applicationType,
     this.lookupCustomer,
+    this.lookupCustomersByName,
     this.onCustomerSelected,
     super.key,
   }) : assert(
@@ -29,6 +37,7 @@ class LoanSearchPage extends ConsumerStatefulWidget {
 
   final int applicationType;
   final CustomerLookupCallback? lookupCustomer;
+  final CustomerNameLookupCallback? lookupCustomersByName;
   final ValueChanged<CustomerLookupResult>? onCustomerSelected;
 
   @override
@@ -41,6 +50,7 @@ class _LoanSearchPageState extends ConsumerState<LoanSearchPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _lastnameController = TextEditingController();
   final TextEditingController _surnameController = TextEditingController();
+  List<CustomerNameMatch> _matches = const <CustomerNameMatch>[];
   bool _isSearching = false;
 
   @override
@@ -77,7 +87,7 @@ class _LoanSearchPageState extends ConsumerState<LoanSearchPage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Captura la información disponible para localizar el crédito.',
+                    'Busca por número de préstamo, CURP o nombre completo.',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 24),
@@ -110,6 +120,19 @@ class _LoanSearchPageState extends ConsumerState<LoanSearchPage> {
                       ),
                     ),
                   ),
+                  if (_matches.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 32),
+                    Text(
+                      'Clientes encontrados',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 12),
+                    _CustomerMatches(
+                      matches: _matches,
+                      isSearching: _isSearching,
+                      onSelected: _selectNameMatch,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -122,34 +145,50 @@ class _LoanSearchPageState extends ConsumerState<LoanSearchPage> {
   Future<void> _searchCustomer() async {
     final String loanNumber = _loanNumberController.text.trim();
     final String curp = _curpController.text.trim().toUpperCase();
-    if (loanNumber.isEmpty && curp.isEmpty) {
-      _showMessage('Captura el CURP o el número de préstamo.');
+    if (loanNumber.isNotEmpty || curp.isNotEmpty) {
+      await _searchExactCustomer(loanNumber: loanNumber, curp: curp);
       return;
     }
 
-    setState(() => _isSearching = true);
-    try {
-      final CustomerLookupResult customer;
-      if (widget.lookupCustomer != null) {
-        customer = await widget.lookupCustomer!(
-          loanNumber: loanNumber,
-          curp: curp,
-        );
-      } else {
-        final AuthSession? session = ref.read(authControllerProvider).whenOrNull(
-              data: (AuthSession? value) => value,
-            );
-        if (session == null) {
-          throw const CustomerLookupException(
-            'La sesión no está disponible. Inicia sesión nuevamente.',
-          );
-        }
-        customer = await ref.read(customerLookupRepositoryProvider).search(
-              loanNumber: loanNumber,
-              curp: curp,
-              token: session.token,
-            );
+    final String name = _nameController.text.trim().toUpperCase();
+    final String lastname = _lastnameController.text.trim().toUpperCase();
+    final String surname = _surnameController.text.trim().toUpperCase();
+    if (name.isEmpty && lastname.isEmpty && surname.isEmpty) {
+      _showMessage(
+        'Captura el CURP, el número de préstamo o el nombre completo.',
+      );
+      return;
+    }
+    if (name.isEmpty || lastname.isEmpty || surname.isEmpty) {
+      _showMessage(
+        'Para buscar por nombre, captura nombres, apellido paterno y apellido materno.',
+      );
+      return;
+    }
+
+    await _searchCustomersByName(
+      name: name,
+      lastname: lastname,
+      surname: surname,
+    );
+  }
+
+  Future<void> _searchExactCustomer({
+    required String loanNumber,
+    required String curp,
+    bool clearMatches = true,
+  }) async {
+    setState(() {
+      _isSearching = true;
+      if (clearMatches) {
+        _matches = const <CustomerNameMatch>[];
       }
+    });
+    try {
+      final CustomerLookupResult customer = await _lookupExactCustomer(
+        loanNumber: loanNumber,
+        curp: curp,
+      );
       if (!mounted) {
         return;
       }
@@ -157,22 +196,7 @@ class _LoanSearchPageState extends ConsumerState<LoanSearchPage> {
       _nameController.text = customer.name;
       _lastnameController.text = customer.lastname;
       _surnameController.text = customer.surname;
-      final bool shouldContinue = await _confirmCustomer(customer);
-      if (!shouldContinue || !mounted) {
-        return;
-      }
-
-      if (widget.onCustomerSelected != null) {
-        widget.onCustomerSelected!(customer);
-        return;
-      }
-      context.go(
-        '/new-credit',
-        extra: LoanSearchNavigationData(
-          applicationType: widget.applicationType,
-          customer: customer,
-        ),
-      );
+      await _continueWithCustomer(customer);
     } on CustomerLookupException catch (error) {
       if (mounted) {
         _showMessage(error.message);
@@ -186,6 +210,111 @@ class _LoanSearchPageState extends ConsumerState<LoanSearchPage> {
         setState(() => _isSearching = false);
       }
     }
+  }
+
+  Future<void> _searchCustomersByName({
+    required String name,
+    required String lastname,
+    required String surname,
+  }) async {
+    setState(() {
+      _isSearching = true;
+      _matches = const <CustomerNameMatch>[];
+    });
+    try {
+      final List<CustomerNameMatch> matches;
+      if (widget.lookupCustomersByName != null) {
+        matches = await widget.lookupCustomersByName!(
+          name: name,
+          lastname: lastname,
+          surname: surname,
+        );
+      } else {
+        final AuthSession session = _requireSession();
+        matches = await ref
+            .read(customerLookupRepositoryProvider)
+            .searchByName(
+              name: name,
+              lastname: lastname,
+              surname: surname,
+              token: session.token,
+            );
+      }
+      if (!mounted) {
+        return;
+      }
+      setState(() => _matches = matches);
+      if (matches.isEmpty) {
+        _showMessage('No se encontraron clientes con ese nombre completo.');
+      }
+    } on CustomerLookupException catch (error) {
+      if (mounted) {
+        _showMessage(error.message);
+      }
+    } on Object {
+      if (mounted) {
+        _showMessage('No fue posible buscar clientes por nombre.');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSearching = false);
+      }
+    }
+  }
+
+  Future<CustomerLookupResult> _lookupExactCustomer({
+    required String loanNumber,
+    required String curp,
+  }) async {
+    if (widget.lookupCustomer != null) {
+      return widget.lookupCustomer!(loanNumber: loanNumber, curp: curp);
+    }
+    final AuthSession session = _requireSession();
+    return ref.read(customerLookupRepositoryProvider).search(
+          loanNumber: loanNumber,
+          curp: curp,
+          token: session.token,
+        );
+  }
+
+  AuthSession _requireSession() {
+    final AuthSession? session = ref.read(authControllerProvider).whenOrNull(
+          data: (AuthSession? value) => value,
+        );
+    if (session == null) {
+      throw const CustomerLookupException(
+        'La sesión no está disponible. Inicia sesión nuevamente.',
+      );
+    }
+    return session;
+  }
+
+  Future<void> _selectNameMatch(CustomerNameMatch match) async {
+    _curpController.text = match.curp;
+    await _searchExactCustomer(
+      loanNumber: '',
+      curp: match.curp,
+      clearMatches: false,
+    );
+  }
+
+  Future<void> _continueWithCustomer(CustomerLookupResult customer) async {
+    final bool shouldContinue = await _confirmCustomer(customer);
+    if (!shouldContinue || !mounted) {
+      return;
+    }
+
+    if (widget.onCustomerSelected != null) {
+      widget.onCustomerSelected!(customer);
+      return;
+    }
+    context.go(
+      '/new-credit',
+      extra: LoanSearchNavigationData(
+        applicationType: widget.applicationType,
+        customer: customer,
+      ),
+    );
   }
 
   Future<bool> _confirmCustomer(CustomerLookupResult customer) async {
@@ -282,7 +411,6 @@ class _SearchFields extends StatelessWidget {
               child: TextFormField(
                 key: const Key('loan-name-field'),
                 controller: nameController,
-                readOnly: true,
                 textCapitalization: TextCapitalization.words,
                 decoration: const InputDecoration(
                   labelText: 'Nombres',
@@ -295,7 +423,6 @@ class _SearchFields extends StatelessWidget {
               child: TextFormField(
                 key: const Key('loan-lastname-field'),
                 controller: lastnameController,
-                readOnly: true,
                 textCapitalization: TextCapitalization.words,
                 decoration: const InputDecoration(
                   labelText: 'Apellido paterno',
@@ -308,7 +435,6 @@ class _SearchFields extends StatelessWidget {
               child: TextFormField(
                 key: const Key('loan-surname-field'),
                 controller: surnameController,
-                readOnly: true,
                 textCapitalization: TextCapitalization.words,
                 decoration: const InputDecoration(
                   labelText: 'Apellido materno',
@@ -320,5 +446,100 @@ class _SearchFields extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+class _CustomerMatches extends StatelessWidget {
+  const _CustomerMatches({
+    required this.matches,
+    required this.isSearching,
+    required this.onSelected,
+  });
+
+  final List<CustomerNameMatch> matches;
+  final bool isSearching;
+  final ValueChanged<CustomerNameMatch> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: matches.length,
+      separatorBuilder: (BuildContext context, int index) =>
+          const SizedBox(height: 12),
+      itemBuilder: (BuildContext context, int index) {
+        final CustomerNameMatch customer = matches[index];
+        return Card.outlined(
+          key: Key('customer-match-${customer.id}'),
+          margin: EdgeInsets.zero,
+          child: InkWell(
+            onTap: isSearching ? null : () => onSelected(customer),
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const Padding(
+                    padding: EdgeInsets.only(top: 2),
+                    child: Icon(Icons.person_outline),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          customer.name,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 4),
+                        Text('CURP: ${customer.curp}'),
+                        if (customer.hasLoanInformation) ...<Widget>[
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 16,
+                            runSpacing: 4,
+                            children: <Widget>[
+                              if (customer.lastLoan.isNotEmpty)
+                                Text(
+                                  'Último préstamo: ${customer.lastLoan}',
+                                  style: _metadataStyle(context),
+                                ),
+                              if (customer.loanRoute.isNotEmpty)
+                                Text(
+                                  'Ruta: ${customer.loanRoute}',
+                                  style: _metadataStyle(context),
+                                ),
+                              if (customer.loanGroup.isNotEmpty)
+                                Text(
+                                  'Grupo: ${customer.loanGroup}',
+                                  style: _metadataStyle(context),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.chevron_right,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  TextStyle? _metadataStyle(BuildContext context) {
+    return Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        );
   }
 }

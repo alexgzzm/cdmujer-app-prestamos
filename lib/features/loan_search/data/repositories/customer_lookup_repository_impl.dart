@@ -1,5 +1,6 @@
 import 'package:cdmujer_app_prestamos/features/loan_search/data/datasources/customer_lookup_remote_data_source.dart';
 import 'package:cdmujer_app_prestamos/features/loan_search/domain/entities/customer_lookup_result.dart';
+import 'package:cdmujer_app_prestamos/features/loan_search/domain/entities/customer_name_match.dart';
 import 'package:cdmujer_app_prestamos/features/loan_search/domain/repositories/customer_lookup_repository.dart';
 
 class CustomerLookupRepositoryImpl implements CustomerLookupRepository {
@@ -21,5 +22,21 @@ class CustomerLookupRepositoryImpl implements CustomerLookupRepository {
       token: token,
     );
     return response.toEntity();
+  }
+
+  @override
+  Future<List<CustomerNameMatch>> searchByName({
+    required String name,
+    required String lastname,
+    required String surname,
+    required String token,
+  }) async {
+    final response = await _dataSource.searchByName(
+      name: name,
+      lastname: lastname,
+      surname: surname,
+      token: token,
+    );
+    return response.map((model) => model.toEntity()).toList();
   }
 }

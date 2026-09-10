@@ -16,7 +16,7 @@ void main() {
       final Map<String, dynamic> body =
           jsonDecode(request.body) as Map<String, dynamic>;
       expect(body['idRoute'], 122);
-      expect(body['term'], 16);
+      expect(body['term'], 14);
       return http.Response(
         '{"id":20763,"status":true,'
         '"message":"Prestamo creado exitosamente",'
@@ -61,7 +61,7 @@ LoanCreationData _sampleLoan() {
     cosigner: person,
     date: DateTime.utc(2026, 9, 9),
     ammount: 12500.50,
-    term: 16,
+    term: 14,
     firstPaymentDate: DateTime.utc(2026, 10, 9),
     beneficiary: '',
     relationship: '',

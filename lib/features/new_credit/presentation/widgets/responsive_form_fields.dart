@@ -1,6 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+class IntegerRangeTextInputFormatter extends TextInputFormatter {
+  const IntegerRangeTextInputFormatter({
+    required this.minimum,
+    required this.maximum,
+  });
+
+  final int minimum;
+  final int maximum;
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+    final int? value = int.tryParse(newValue.text);
+    if (value == null || value < minimum || value > maximum) {
+      return oldValue;
+    }
+    return newValue;
+  }
+}
+
 class CreditFieldDefinition {
   const CreditFieldDefinition({
     required this.name,

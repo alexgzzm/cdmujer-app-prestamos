@@ -141,6 +141,10 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
       name: 'term',
       label: 'Plazo',
       keyboardType: TextInputType.number,
+      maxLength: 2,
+      inputFormatters: <TextInputFormatter>[
+        IntegerRangeTextInputFormatter(minimum: 1, maximum: 14),
+      ],
     ),
     CreditFieldDefinition(
       name: 'firstPaymentDate',
@@ -512,9 +516,11 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
     if (ammount == null || ammount <= 0) {
       throw const LoanCreationException('Captura un monto válido.');
     }
-    final int term = _requiredPositiveInt(
+    final int term = _requiredIntInRange(
       _creditControllers['term']!.text,
-      'Captura un plazo válido.',
+      minimum: 1,
+      maximum: 14,
+      message: 'Captura un plazo válido.',
     );
 
     return LoanCreationData(
@@ -572,6 +578,19 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
   int _requiredPositiveInt(String value, String message) {
     final int? parsed = int.tryParse(value);
     if (parsed == null || parsed <= 0) {
+      throw LoanCreationException(message);
+    }
+    return parsed;
+  }
+
+  int _requiredIntInRange(
+    String value, {
+    required int minimum,
+    required int maximum,
+    required String message,
+  }) {
+    final int? parsed = int.tryParse(value);
+    if (parsed == null || parsed < minimum || parsed > maximum) {
       throw LoanCreationException(message);
     }
     return parsed;

@@ -11,7 +11,7 @@ void main() {
     expect(json['idRoute'], 122);
     expect(json['idGroup'], 1302);
     expect(json['ammount'], 12500.50);
-    expect(json['term'], 16);
+    expect(json['term'], 14);
     expect(json['date'], '2026-09-09T00:00:00.000Z');
     expect(json['firstPaymentDate'], '2026-10-09T00:00:00.000Z');
     expect(json, isNot(contains('paymentMethod')));
@@ -74,7 +74,7 @@ LoanCreationData _sampleLoan() {
     cosigner: person,
     date: DateTime.utc(2026, 9, 9),
     ammount: 12500.50,
-    term: 16,
+    term: 14,
     firstPaymentDate: DateTime.utc(2026, 10, 9),
     beneficiary: 'Beneficiario',
     relationship: 'Hijo',

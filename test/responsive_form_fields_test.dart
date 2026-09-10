@@ -36,4 +36,40 @@ void main() {
 
     expect(controller.text, '04253');
   });
+
+  testWidgets('accepts only terms from 1 through 14',
+      (WidgetTester tester) async {
+    final TextEditingController controller = TextEditingController();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ResponsiveFormFields(
+            fields: const <CreditFieldDefinition>[
+              CreditFieldDefinition(
+                name: 'term',
+                label: 'Plazo',
+                keyboardType: TextInputType.number,
+                maxLength: 2,
+                inputFormatters: <TextInputFormatter>[
+                  IntegerRangeTextInputFormatter(minimum: 1, maximum: 14),
+                ],
+              ),
+            ],
+            controllers: <String, TextEditingController>{
+              'term': controller,
+            },
+          ),
+        ),
+      ),
+    );
+
+    final Finder field = find.byType(TextFormField);
+    await tester.enterText(field, '14');
+    expect(controller.text, '14');
+
+    await tester.enterText(field, '15');
+    expect(controller.text, '14');
+  });
 }

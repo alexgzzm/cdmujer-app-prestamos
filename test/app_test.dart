@@ -13,7 +13,7 @@ void main() {
     expect(find.text('Ingresar'), findsOneWidget);
 
     final Image logo = tester.widget<Image>(find.byType(Image));
-    final NetworkImage imageProvider = logo.image as NetworkImage;
-    expect(imageProvider.url, AppBranding.logoUrl);
+    final AssetImage imageProvider = logo.image as AssetImage;
+    expect(imageProvider.assetName, AppBranding.logoAsset);
   });
 }

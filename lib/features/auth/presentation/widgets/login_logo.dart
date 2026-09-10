@@ -7,19 +7,11 @@ class LoginLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Image.network(
-        AppBranding.logoUrl,
+      child: Image.asset(
+        AppBranding.logoAsset,
         width: 240,
         height: 120,
         fit: BoxFit.contain,
-        errorBuilder:
-            (BuildContext context, Object error, StackTrace? stackTrace) {
-          return const SizedBox(
-            width: 240,
-            height: 120,
-            child: Center(child: Text('LOGOTIPO')),
-          );
-        },
       ),
     );
   }

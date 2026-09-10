@@ -1,5 +1,6 @@
 class LoanPersonData {
   const LoanPersonData({
+    required this.id,
     required this.lastname,
     required this.surname,
     required this.name,
@@ -17,6 +18,7 @@ class LoanPersonData {
     required this.curp,
   });
 
+  final int id;
   final String lastname;
   final String surname;
   final String name;

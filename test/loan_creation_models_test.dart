@@ -8,6 +8,7 @@ void main() {
     final Map<String, dynamic> json =
         LoanCreationRequestModel(_sampleLoan()).toJson();
 
+    expect(json['id'], 0);
     expect(json['idRoute'], 122);
     expect(json['idGroup'], 1302);
     expect(json['ammount'], 12500.50);
@@ -19,6 +20,7 @@ void main() {
     expect(json, isNot(contains('iva')));
     expect(json, isNot(contains('insurance')));
     expect(json['attachments'], <int>[11, 12]);
+    expect((json['client'] as Map<String, dynamic>)['id'], 84542);
     expect(
       json['client'] as Map<String, dynamic>,
       isNot(contains('client')),
@@ -51,6 +53,7 @@ void main() {
 
 LoanCreationData _sampleLoan() {
   const LoanPersonData person = LoanPersonData(
+    id: 84542,
     lastname: 'García',
     surname: 'Méndez',
     name: 'María',

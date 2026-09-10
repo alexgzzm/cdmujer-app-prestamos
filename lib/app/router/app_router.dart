@@ -2,6 +2,7 @@ import 'package:cdmujer_app_prestamos/app/widgets/app_scaffold.dart';
 import 'package:cdmujer_app_prestamos/features/auth/presentation/pages/login_page.dart';
 import 'package:cdmujer_app_prestamos/features/clients/presentation/pages/clients_page.dart';
 import 'package:cdmujer_app_prestamos/features/home/presentation/pages/home_page.dart';
+import 'package:cdmujer_app_prestamos/features/loan_search/domain/entities/customer_lookup_result.dart';
 import 'package:cdmujer_app_prestamos/features/loan_search/presentation/pages/loan_search_page.dart';
 import 'package:cdmujer_app_prestamos/features/loans/presentation/pages/loans_page.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/pages/new_credit_page.dart';
@@ -25,7 +26,16 @@ final GoRouter appRouter = GoRouter(
         GoRoute(path: '/home', builder: (context, state) => const HomePage()),
         GoRoute(
           path: '/new-credit',
-          builder: (context, state) => const NewCreditPage(),
+          builder: (context, state) {
+            final Object? extra = state.extra;
+            if (extra is LoanSearchNavigationData) {
+              return NewCreditPage(
+                applicationType: extra.applicationType,
+                initialClient: extra.customer,
+              );
+            }
+            return const NewCreditPage();
+          },
         ),
         GoRoute(
           path: '/renewal',

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:cdmujer_app_prestamos/features/auth/domain/entities/auth_session.dart';
 import 'package:cdmujer_app_prestamos/features/auth/presentation/providers/auth_providers.dart';
+import 'package:cdmujer_app_prestamos/features/loan_search/domain/entities/customer_lookup_result.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/attachment_upload_result.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/city_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/ine_extracted_data.dart';
@@ -26,6 +27,7 @@ import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_information_validation_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_route_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/state_providers.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/utils/customer_form_populator.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/utils/ine_form_populator.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/city_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/credit_date_picker.dart';
@@ -43,7 +45,14 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 class NewCreditPage extends ConsumerStatefulWidget {
-  const NewCreditPage({super.key});
+  const NewCreditPage({
+    this.applicationType = 1,
+    this.initialClient,
+    super.key,
+  });
+
+  final int applicationType;
+  final CustomerLookupResult? initialClient;
 
   @override
   ConsumerState<NewCreditPage> createState() => _NewCreditPageState();
@@ -198,8 +207,20 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
     _clientControllers = _createControllers(_personFields);
     _cosignerControllers = _createControllers(_personFields);
     _creditControllers = _createControllers(_creditFields);
+    final CustomerLookupResult? initialClient = widget.initialClient;
+    if (initialClient != null) {
+      CustomerFormPopulator.apply(
+        customer: initialClient,
+        controllers: _clientControllers,
+      );
+    }
     _clientControllers['curp']!.addListener(_onClientCurpChanged);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadStates());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _loadStates();
+      if (initialClient != null && initialClient.state > 0 && mounted) {
+        await _loadClientCities(stateId: initialClient.state.toString());
+      }
+    });
   }
 
   @override
@@ -528,8 +549,11 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
     return LoanCreationData(
       idRoute: idRoute,
       idGroup: idGroup,
-      client: _personDataFrom(_clientControllers),
-      cosigner: _personDataFrom(_cosignerControllers),
+      client: _personDataFrom(
+        _clientControllers,
+        id: widget.initialClient?.id ?? 0,
+      ),
+      cosigner: _personDataFrom(_cosignerControllers, id: 0),
       date: date,
       ammount: ammount,
       term: term,
@@ -542,9 +566,11 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
   }
 
   LoanPersonData _personDataFrom(
-    Map<String, TextEditingController> controllers,
-  ) {
+    Map<String, TextEditingController> controllers, {
+    required int id,
+  }) {
     return LoanPersonData(
+      id: id,
       lastname: _textValue(controllers, 'lastname'),
       surname: _textValue(controllers, 'surname'),
       name: _textValue(controllers, 'name'),

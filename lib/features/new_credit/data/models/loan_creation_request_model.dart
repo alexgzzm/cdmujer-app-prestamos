@@ -25,7 +25,7 @@ class LoanCreationRequestModel {
 
   Map<String, dynamic> _personToJson(LoanPersonData person) {
     return <String, dynamic>{
-      'id': 0,
+      'id': person.id,
       'lastname': person.lastname,
       'surname': person.surname,
       'name': person.name,

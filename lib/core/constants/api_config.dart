@@ -16,4 +16,7 @@ abstract final class ApiConfig {
       Uri.parse('https://localhost:7127/api/Loans/ValidateInformation');
   static final Uri loansEndpoint =
       Uri.parse('https://localhost:7127/api/Loans');
+  static final Uri customerFromLoanOrCurpEndpoint = Uri.parse(
+    'https://localhost:7127/api/Customers/GetCustomerFromLoanOrCurp',
+  );
 }

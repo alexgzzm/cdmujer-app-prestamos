@@ -38,6 +38,7 @@ void main() {
 
 LoanCreationData _sampleLoan() {
   const LoanPersonData person = LoanPersonData(
+    id: 0,
     lastname: 'García',
     surname: 'Méndez',
     name: 'María',

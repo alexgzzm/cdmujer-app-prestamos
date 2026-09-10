@@ -1,6 +1,7 @@
 import 'package:cdmujer_app_prestamos/features/loan_search/domain/entities/customer_lookup_result.dart';
 import 'package:cdmujer_app_prestamos/features/loan_search/domain/entities/customer_name_match.dart';
 import 'package:cdmujer_app_prestamos/features/loan_search/presentation/pages/loan_search_page.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_information_validation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -49,6 +50,10 @@ void main() {
         expect(curp, '');
         return _customer;
       },
+      validateCustomer: ({required String curp}) async {
+        expect(curp, _customer.curp);
+        return _successfulValidation;
+      },
     )));
 
     await tester.enterText(find.byKey(const Key('loan-number-field')), '15');
@@ -82,6 +87,10 @@ void main() {
         expect(loanNumber, '');
         expect(curp, 'AATM980401MMNLLY05');
         return _customer;
+      },
+      validateCustomer: ({required String curp}) async {
+        expect(curp, _customer.curp);
+        return _successfulValidation;
       },
       onCustomerSelected: (CustomerLookupResult customer) {
         selectedCustomer = customer;
@@ -158,6 +167,10 @@ void main() {
         expect(curp, _nameMatch.curp);
         return _customer;
       },
+      validateCustomer: ({required String curp}) async {
+        expect(curp, _customer.curp);
+        return _successfulValidation;
+      },
       onCustomerSelected: (CustomerLookupResult customer) {
         selectedCustomer = customer;
       },
@@ -194,6 +207,68 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(selectedCustomer?.id, _customer.id);
+  });
+
+  testWidgets('blocks the application when customer validation fails',
+      (WidgetTester tester) async {
+    CustomerLookupResult? selectedCustomer;
+    await tester.pumpWidget(_testApp(LoanSearchPage(
+      applicationType: LoanSearchPage.renewalType,
+      lookupCustomer: ({required String loanNumber, required String curp}) async {
+        return _customer;
+      },
+      validateCustomer: ({required String curp}) async {
+        expect(curp, _customer.curp);
+        return const LoanInformationValidation(
+          id: 84542,
+          status: false,
+          message: 'El cliente tiene un préstamo abierto.',
+          messageType: LoanValidationMessageType.error,
+        );
+      },
+      onCustomerSelected: (CustomerLookupResult customer) {
+        selectedCustomer = customer;
+      },
+    )));
+
+    await tester.enterText(find.byKey(const Key('loan-number-field')), '15');
+    await tester.tap(find.byKey(const Key('loan-search-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('No es posible continuar'), findsOneWidget);
+    expect(find.text('El cliente tiene un préstamo abierto.'), findsOneWidget);
+    expect(find.text('Cliente encontrado'), findsNothing);
+    expect(selectedCustomer, isNull);
+  });
+
+  testWidgets('continues after a customer validation warning',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(_testApp(LoanSearchPage(
+      applicationType: LoanSearchPage.reentryType,
+      lookupCustomer: ({required String loanNumber, required String curp}) async {
+        return _customer;
+      },
+      validateCustomer: ({required String curp}) async {
+        return const LoanInformationValidation(
+          id: 84542,
+          status: false,
+          message: 'El cliente tiene información por revisar.',
+          messageType: LoanValidationMessageType.warning,
+        );
+      },
+    )));
+
+    await tester.enterText(find.byKey(const Key('loan-number-field')), '15');
+    await tester.tap(find.byKey(const Key('loan-search-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Advertencia'), findsOneWidget);
+    await tester.tap(find.text('Aceptar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cliente encontrado'), findsOneWidget);
   });
 }
 
@@ -236,4 +311,12 @@ const CustomerNameMatch _nameMatch = CustomerNameMatch(
   lastLoan: '105',
   loanRoute: 'RUTA 1',
   loanGroup: 'GRUPO A',
+);
+
+const LoanInformationValidation _successfulValidation =
+    LoanInformationValidation(
+  id: null,
+  status: true,
+  message: 'El cliente puede continuar.',
+  messageType: LoanValidationMessageType.success,
 );

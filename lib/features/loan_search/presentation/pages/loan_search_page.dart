@@ -4,6 +4,9 @@ import 'package:cdmujer_app_prestamos/features/loan_search/domain/entities/custo
 import 'package:cdmujer_app_prestamos/features/loan_search/domain/entities/customer_name_match.dart';
 import 'package:cdmujer_app_prestamos/features/loan_search/domain/errors/customer_lookup_exception.dart';
 import 'package:cdmujer_app_prestamos/features/loan_search/presentation/providers/customer_lookup_providers.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_information_validation.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/loan_information_validation_exception.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_information_validation_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
@@ -20,11 +23,15 @@ typedef CustomerNameLookupCallback = Future<List<CustomerNameMatch>> Function({
   required String surname,
 });
 
+typedef CustomerValidationCallback = Future<LoanInformationValidation>
+    Function({required String curp});
+
 class LoanSearchPage extends ConsumerStatefulWidget {
   const LoanSearchPage({
     required this.applicationType,
     this.lookupCustomer,
     this.lookupCustomersByName,
+    this.validateCustomer,
     this.onCustomerSelected,
     super.key,
   }) : assert(
@@ -38,6 +45,7 @@ class LoanSearchPage extends ConsumerStatefulWidget {
   final int applicationType;
   final CustomerLookupCallback? lookupCustomer;
   final CustomerNameLookupCallback? lookupCustomersByName;
+  final CustomerValidationCallback? validateCustomer;
   final ValueChanged<CustomerLookupResult>? onCustomerSelected;
 
   @override
@@ -196,6 +204,10 @@ class _LoanSearchPageState extends ConsumerState<LoanSearchPage> {
       _nameController.text = customer.name;
       _lastnameController.text = customer.lastname;
       _surnameController.text = customer.surname;
+      final bool canContinue = await _validateCustomer(customer.curp);
+      if (!canContinue || !mounted) {
+        return;
+      }
       await _continueWithCustomer(customer);
     } on CustomerLookupException catch (error) {
       if (mounted) {
@@ -287,6 +299,81 @@ class _LoanSearchPageState extends ConsumerState<LoanSearchPage> {
       );
     }
     return session;
+  }
+
+  Future<bool> _validateCustomer(String curp) async {
+    final String normalizedCurp = curp.trim().toUpperCase();
+    try {
+      final LoanInformationValidation validation;
+      if (widget.validateCustomer != null) {
+        validation = await widget.validateCustomer!(curp: normalizedCurp);
+      } else {
+        final AuthSession? session =
+            ref.read(authControllerProvider).whenOrNull(
+                  data: (AuthSession? value) => value,
+                );
+        if (session == null) {
+          throw const LoanInformationValidationException(
+            'La sesión no está disponible. Inicia sesión nuevamente.',
+          );
+        }
+        validation = await ref
+            .read(loanInformationValidationRepositoryProvider)
+            .validate(curp: normalizedCurp, token: session.token);
+      }
+      if (!mounted || !validation.shouldShowMessage) {
+        return mounted;
+      }
+
+      await _showCustomerValidationDialog(
+        message: validation.message,
+        mustReturnHome: validation.mustReturnHome,
+      );
+      return mounted && !validation.mustReturnHome;
+    } on LoanInformationValidationException catch (error) {
+      if (mounted) {
+        await _showCustomerValidationDialog(
+          message: error.message,
+          mustReturnHome: false,
+        );
+      }
+      return mounted;
+    } on Object {
+      if (mounted) {
+        await _showCustomerValidationDialog(
+          message: 'No fue posible validar la información del CURP.',
+          mustReturnHome: false,
+        );
+      }
+      return mounted;
+    }
+  }
+
+  Future<void> _showCustomerValidationDialog({
+    required String message,
+    required bool mustReturnHome,
+  }) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: !mustReturnHome,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            mustReturnHome ? 'No es posible continuar' : 'Advertencia',
+          ),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Aceptar'),
+            ),
+          ],
+        );
+      },
+    );
+    if (mustReturnHome && mounted) {
+      context.go('/home');
+    }
   }
 
   Future<void> _selectNameMatch(CustomerNameMatch match) async {

@@ -18,8 +18,25 @@ void main() {
     expect(find.text('Buscar crédito para renovación'), findsOneWidget);
     expect(find.text('Número de préstamo'), findsOneWidget);
     expect(find.text('CURP'), findsOneWidget);
-    expect(find.text('Nombre'), findsOneWidget);
+    expect(find.text('Nombres'), findsOneWidget);
+    expect(find.text('Apellido paterno'), findsOneWidget);
+    expect(find.text('Apellido materno'), findsOneWidget);
     expect(find.text('Buscar'), findsOneWidget);
+
+    final List<Key?> fieldKeys = tester
+        .widgetList<TextFormField>(find.byType(TextFormField))
+        .map((TextFormField field) => field.key)
+        .toList();
+    expect(
+      fieldKeys,
+      <Key>[
+        const Key('loan-number-field'),
+        const Key('loan-curp-field'),
+        const Key('loan-name-field'),
+        const Key('loan-lastname-field'),
+        const Key('loan-surname-field'),
+      ],
+    );
   });
 
   testWidgets('keeps search values when the customer is cancelled',
@@ -49,7 +66,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(_textOf(tester, 'loan-number-field'), '15');
-    expect(_textOf(tester, 'loan-name-field'), _customer.fullName);
+    expect(_textOf(tester, 'loan-name-field'), _customer.name);
+    expect(_textOf(tester, 'loan-lastname-field'), _customer.lastname);
+    expect(_textOf(tester, 'loan-surname-field'), _customer.surname);
     expect(find.byType(LoanSearchPage), findsOneWidget);
   });
 

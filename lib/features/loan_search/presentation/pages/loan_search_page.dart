@@ -39,6 +39,8 @@ class _LoanSearchPageState extends ConsumerState<LoanSearchPage> {
   final TextEditingController _loanNumberController = TextEditingController();
   final TextEditingController _curpController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _lastnameController = TextEditingController();
+  final TextEditingController _surnameController = TextEditingController();
   bool _isSearching = false;
 
   @override
@@ -46,6 +48,8 @@ class _LoanSearchPageState extends ConsumerState<LoanSearchPage> {
     _loanNumberController.dispose();
     _curpController.dispose();
     _nameController.dispose();
+    _lastnameController.dispose();
+    _surnameController.dispose();
     super.dispose();
   }
 
@@ -81,6 +85,8 @@ class _LoanSearchPageState extends ConsumerState<LoanSearchPage> {
                     loanNumberController: _loanNumberController,
                     curpController: _curpController,
                     nameController: _nameController,
+                    lastnameController: _lastnameController,
+                    surnameController: _surnameController,
                   ),
                   const SizedBox(height: 28),
                   Align(
@@ -148,7 +154,9 @@ class _LoanSearchPageState extends ConsumerState<LoanSearchPage> {
         return;
       }
 
-      _nameController.text = customer.fullName;
+      _nameController.text = customer.name;
+      _lastnameController.text = customer.lastname;
+      _surnameController.text = customer.surname;
       final bool shouldContinue = await _confirmCustomer(customer);
       if (!shouldContinue || !mounted) {
         return;
@@ -219,11 +227,15 @@ class _SearchFields extends StatelessWidget {
     required this.loanNumberController,
     required this.curpController,
     required this.nameController,
+    required this.lastnameController,
+    required this.surnameController,
   });
 
   final TextEditingController loanNumberController;
   final TextEditingController curpController;
   final TextEditingController nameController;
+  final TextEditingController lastnameController;
+  final TextEditingController surnameController;
 
   @override
   Widget build(BuildContext context) {
@@ -273,7 +285,33 @@ class _SearchFields extends StatelessWidget {
                 readOnly: true,
                 textCapitalization: TextCapitalization.words,
                 decoration: const InputDecoration(
-                  labelText: 'Nombre',
+                  labelText: 'Nombres',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SizedBox(
+              width: fieldWidth,
+              child: TextFormField(
+                key: const Key('loan-lastname-field'),
+                controller: lastnameController,
+                readOnly: true,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(
+                  labelText: 'Apellido paterno',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SizedBox(
+              width: fieldWidth,
+              child: TextFormField(
+                key: const Key('loan-surname-field'),
+                controller: surnameController,
+                readOnly: true,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(
+                  labelText: 'Apellido materno',
                   border: OutlineInputBorder(),
                 ),
               ),

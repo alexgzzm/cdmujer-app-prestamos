@@ -34,6 +34,7 @@ class CreditFieldDefinition {
     this.maxLines = 1,
     this.maxLength,
     this.inputFormatters = const <TextInputFormatter>[],
+    this.showCounter = true,
   });
 
   final String name;
@@ -42,6 +43,7 @@ class CreditFieldDefinition {
   final int maxLines;
   final int? maxLength;
   final List<TextInputFormatter> inputFormatters;
+  final bool showCounter;
 }
 
 class ResponsiveFormFields extends StatelessWidget {
@@ -81,6 +83,15 @@ class ResponsiveFormFields extends StatelessWidget {
                     maxLines: field.maxLines,
                     maxLength: field.maxLength,
                     inputFormatters: field.inputFormatters,
+                    buildCounter: field.showCounter
+                        ? null
+                        : (
+                            _, {
+                            required int currentLength,
+                            required bool isFocused,
+                            required int? maxLength,
+                          }) =>
+                            null,
                     textInputAction: field.maxLines > 1
                         ? TextInputAction.newline
                         : TextInputAction.next,

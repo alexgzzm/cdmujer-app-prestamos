@@ -93,6 +93,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
       label: 'Código postal',
       keyboardType: TextInputType.number,
       maxLength: 5,
+      showCounter: false,
       inputFormatters: <TextInputFormatter>[
         FilteringTextInputFormatter.digitsOnly,
       ],
@@ -142,6 +143,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
       label: 'Plazo',
       keyboardType: TextInputType.number,
       maxLength: 2,
+      showCounter: false,
       inputFormatters: <TextInputFormatter>[
         IntegerRangeTextInputFormatter(minimum: 1, maximum: 14),
       ],

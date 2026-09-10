@@ -19,6 +19,7 @@ void main() {
                 label: 'Código postal',
                 keyboardType: TextInputType.number,
                 maxLength: 5,
+                showCounter: false,
                 inputFormatters: <TextInputFormatter>[
                   FilteringTextInputFormatter.digitsOnly,
                 ],
@@ -35,6 +36,7 @@ void main() {
     await tester.enterText(find.byType(TextFormField), '04253abc9');
 
     expect(controller.text, '04253');
+    expect(find.text('5/5'), findsNothing);
   });
 
   testWidgets('accepts only terms from 1 through 14',
@@ -52,6 +54,7 @@ void main() {
                 label: 'Plazo',
                 keyboardType: TextInputType.number,
                 maxLength: 2,
+                showCounter: false,
                 inputFormatters: <TextInputFormatter>[
                   IntegerRangeTextInputFormatter(minimum: 1, maximum: 14),
                 ],
@@ -68,6 +71,7 @@ void main() {
     final Finder field = find.byType(TextFormField);
     await tester.enterText(field, '14');
     expect(controller.text, '14');
+    expect(find.text('2/2'), findsNothing);
 
     await tester.enterText(field, '15');
     expect(controller.text, '14');

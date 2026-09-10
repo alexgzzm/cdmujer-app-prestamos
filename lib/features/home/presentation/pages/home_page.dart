@@ -22,14 +22,16 @@ class HomePage extends StatelessWidget {
                 onPressed: () => context.go('/new-credit'),
               ),
               const SizedBox(height: 20),
-              const HomeActionButton(
+              HomeActionButton(
                 label: 'Renovación',
                 icon: Icons.autorenew,
+                onPressed: () => context.go('/renewal'),
               ),
               const SizedBox(height: 20),
-              const HomeActionButton(
+              HomeActionButton(
                 label: 'Reingreso',
                 icon: Icons.login,
+                onPressed: () => context.go('/reentry'),
               ),
             ],
           ),

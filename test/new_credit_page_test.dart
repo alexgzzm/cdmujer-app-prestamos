@@ -4,6 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('runs INE OCR only for a new credit application', () {
+    expect(
+      NewCreditPage.shouldRunIneOcrFor(NewCreditPage.newCreditType),
+      isTrue,
+    );
+    expect(NewCreditPage.shouldRunIneOcrFor(2), isFalse);
+    expect(NewCreditPage.shouldRunIneOcrFor(3), isFalse);
+  });
+
   testWidgets('moves through the new credit wizard',
       (WidgetTester tester) async {
     await tester.pumpWidget(
@@ -15,6 +24,10 @@ void main() {
     expect(find.text('Datos del cliente'), findsOneWidget);
     expect(find.text('INE Frontal'), findsOneWidget);
     expect(find.text('INE Reverso'), findsOneWidget);
+    final NewCreditPage page = tester.widget<NewCreditPage>(
+      find.byType(NewCreditPage),
+    );
+    expect(page.applicationType, NewCreditPage.newCreditType);
 
     await tester.tap(find.text('Siguiente'));
     await tester.pump();

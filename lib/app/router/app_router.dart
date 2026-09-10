@@ -34,7 +34,9 @@ final GoRouter appRouter = GoRouter(
                 initialClient: extra.customer,
               );
             }
-            return const NewCreditPage();
+            return const NewCreditPage(
+              applicationType: NewCreditPage.newCreditType,
+            );
           },
         ),
         GoRoute(

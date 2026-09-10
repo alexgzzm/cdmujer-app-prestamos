@@ -46,13 +46,19 @@ import 'package:image_picker/image_picker.dart';
 
 class NewCreditPage extends ConsumerStatefulWidget {
   const NewCreditPage({
-    this.applicationType = 1,
+    this.applicationType = newCreditType,
     this.initialClient,
     super.key,
   });
 
+  static const int newCreditType = 1;
+
   final int applicationType;
   final CustomerLookupResult? initialClient;
+
+  static bool shouldRunIneOcrFor(int applicationType) {
+    return applicationType == newCreditType;
+  }
 
   @override
   ConsumerState<NewCreditPage> createState() => _NewCreditPageState();
@@ -990,7 +996,8 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
         contentType: photo.mimeType,
         token: session.token,
       );
-      if (extractionTarget != null) {
+      if (extractionTarget != null &&
+          NewCreditPage.shouldRunIneOcrFor(widget.applicationType)) {
         await _extractIneData(
           bytes: bytes,
           fileName: photo.name,

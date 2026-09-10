@@ -63,7 +63,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
     'Información del crédito',
   ];
 
-  static const List<CreditFieldDefinition> _personFields =
+  static final List<CreditFieldDefinition> _personFields =
       <CreditFieldDefinition>[
     CreditFieldDefinition(name: 'lastname', label: 'Apellido paterno'),
     CreditFieldDefinition(name: 'surname', label: 'Apellido materno'),

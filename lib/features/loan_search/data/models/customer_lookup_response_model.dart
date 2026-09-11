@@ -10,6 +10,7 @@ class CustomerLookupResponseModel {
         lastname: _requiredString(json, 'lastname'),
         surname: _requiredString(json, 'surname'),
         name: _requiredString(json, 'name'),
+        birthDate: _requiredDate(json, 'birthDate'),
         gender: _requiredInt(json, 'gender'),
         street: _requiredString(json, 'street'),
         betweenStreets: _requiredString(json, 'betweenStreets'),
@@ -48,5 +49,16 @@ class CustomerLookupResponseModel {
       );
     }
     return value;
+  }
+
+  static DateTime _requiredDate(Map<String, dynamic> json, String key) {
+    final dynamic value = json[key];
+    final DateTime? date = value is String ? DateTime.tryParse(value) : null;
+    if (date == null) {
+      throw const FormatException(
+        'La respuesta de búsqueda del cliente no es válida.',
+      );
+    }
+    return DateTime.utc(date.year, date.month, date.day);
   }
 }

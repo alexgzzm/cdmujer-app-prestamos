@@ -308,11 +308,12 @@ String _textOf(WidgetTester tester, String key) {
       .text;
 }
 
-const CustomerLookupResult _customer = CustomerLookupResult(
+final CustomerLookupResult _customer = CustomerLookupResult(
   id: 84542,
   lastname: 'ALVAREZ',
   surname: 'TOLENTINO',
   name: 'MAYRA LIZET',
+  birthDate: DateTime.utc(1998, 4, 1),
   gender: 0,
   street: 'ART 123',
   betweenStreets: '',

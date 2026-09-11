@@ -1,4 +1,5 @@
 import 'package:cdmujer_app_prestamos/features/loan_search/domain/entities/customer_lookup_result.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/credit_date_picker.dart';
 import 'package:flutter/material.dart';
 
 abstract final class CustomerFormPopulator {
@@ -9,6 +10,7 @@ abstract final class CustomerFormPopulator {
     _setText(controllers['lastname'], customer.lastname);
     _setText(controllers['surname'], customer.surname);
     _setText(controllers['name'], customer.name);
+    _setText(controllers['birthDate'], formatCreditDate(customer.birthDate));
     _setText(controllers['gender'], customer.gender.toString());
     _setText(controllers['street'], customer.street);
     _setText(controllers['betweenStreets'], customer.betweenStreets);

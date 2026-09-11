@@ -26,6 +26,7 @@ void main() {
 
     expect(response.customer.id, 84542);
     expect(response.customer.curp, 'AATM980401MMNLLY05');
+    expect(response.customer.birthDate, DateTime.utc(1998, 4, 1));
   });
 
   test('searches customers by full name and sends the bearer token', () async {
@@ -64,6 +65,7 @@ const String _responseBody = '''
   "lastname": "ALVAREZ",
   "surname": "TOLENTINO",
   "name": "MAYRA LIZET",
+  "birthDate": "1998-04-01T00:00:00",
   "gender": 0,
   "street": "ART 123",
   "betweenStreets": "",

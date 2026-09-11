@@ -4,6 +4,7 @@ class CustomerLookupResult {
     required this.lastname,
     required this.surname,
     required this.name,
+    required this.birthDate,
     required this.gender,
     required this.street,
     required this.betweenStreets,
@@ -22,6 +23,7 @@ class CustomerLookupResult {
   final String lastname;
   final String surname;
   final String name;
+  final DateTime birthDate;
   final int gender;
   final String street;
   final String betweenStreets;

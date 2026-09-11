@@ -9,6 +9,7 @@ void main() {
 
     expect(customer.id, 84542);
     expect(customer.phoneNumber, isNull);
+    expect(customer.birthDate, DateTime.utc(1998, 4, 1));
     expect(customer.fullName, 'MAYRA LIZET, ALVAREZ, TOLENTINO');
   });
 }
@@ -19,6 +20,7 @@ Map<String, dynamic> _customerJson() {
     'lastname': 'ALVAREZ',
     'surname': 'TOLENTINO',
     'name': 'MAYRA LIZET',
+    'birthDate': '1998-04-01T00:00:00',
     'gender': 0,
     'street': 'ART 123',
     'betweenStreets': '',

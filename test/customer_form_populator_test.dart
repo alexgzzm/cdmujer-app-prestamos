@@ -25,6 +25,7 @@ void main() {
     );
 
     expect(client['name']!.text, 'MAYRA LIZET');
+    expect(client['birthDate']!.text, '01/04/1998');
     expect(client['state']!.text, '16');
     expect(client['city']!.text, '24');
     expect(client['phoneNumber']!.text, '');
@@ -43,6 +44,7 @@ Map<String, TextEditingController> _controllers() {
       'lastname',
       'surname',
       'name',
+      'birthDate',
       'gender',
       'street',
       'betweenStreets',
@@ -60,11 +62,12 @@ Map<String, TextEditingController> _controllers() {
   };
 }
 
-const CustomerLookupResult _customer = CustomerLookupResult(
+final CustomerLookupResult _customer = CustomerLookupResult(
   id: 84542,
   lastname: 'ALVAREZ',
   surname: 'TOLENTINO',
   name: 'MAYRA LIZET',
+  birthDate: DateTime.utc(1998, 4, 1),
   gender: 0,
   street: 'ART 123',
   betweenStreets: '',

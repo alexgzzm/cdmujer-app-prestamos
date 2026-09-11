@@ -17,6 +17,14 @@ void main() {
           jsonDecode(request.body) as Map<String, dynamic>;
       expect(body['idRoute'], 122);
       expect(body['term'], 14);
+      expect(
+        body['client'] as Map<String, dynamic>,
+        isNot(contains('gender')),
+      );
+      expect(
+        body['cosigner'] as Map<String, dynamic>,
+        isNot(contains('gender')),
+      );
       return http.Response(
         '{"id":20763,"status":true,'
         '"message":"Prestamo creado exitosamente",'
@@ -43,7 +51,6 @@ LoanCreationData _sampleLoan() {
     surname: 'Méndez',
     name: 'María',
     birthDate: DateTime.utc(1990, 5, 20),
-    gender: 2,
     street: 'Reforma',
     betweenStreets: '',
     extNum: '10',

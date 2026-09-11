@@ -11,7 +11,6 @@ abstract final class CustomerFormPopulator {
     _setText(controllers['surname'], customer.surname);
     _setText(controllers['name'], customer.name);
     _setText(controllers['birthDate'], formatCreditDate(customer.birthDate));
-    _setText(controllers['gender'], customer.gender.toString());
     _setText(controllers['street'], customer.street);
     _setText(controllers['betweenStreets'], customer.betweenStreets);
     _setText(controllers['extNum'], customer.extNum);

@@ -11,7 +11,6 @@ class CustomerLookupResponseModel {
         surname: _requiredString(json, 'surname'),
         name: _requiredString(json, 'name'),
         birthDate: _requiredDate(json, 'birthDate'),
-        gender: _requiredInt(json, 'gender'),
         street: _requiredString(json, 'street'),
         betweenStreets: _requiredString(json, 'betweenStreets'),
         extNum: _requiredString(json, 'extNum'),

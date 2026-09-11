@@ -26,6 +26,7 @@ void main() {
 
     expect(find.text('Datos del cliente'), findsOneWidget);
     expect(find.text('Fecha de nacimiento'), findsOneWidget);
+    expect(find.text('Género'), findsNothing);
     final CreditDatePicker clientBirthDatePicker =
         tester.widget<CreditDatePicker>(
       find.byKey(
@@ -49,6 +50,7 @@ void main() {
     await tester.pump();
     expect(find.text('Datos del aval'), findsOneWidget);
     expect(find.text('Fecha de nacimiento'), findsOneWidget);
+    expect(find.text('Género'), findsNothing);
     expect(find.byKey(const Key('search-cosigner-button')), findsOneWidget);
     final double searchButtonTop = tester
         .getTopLeft(find.byKey(const Key('search-cosigner-button')))

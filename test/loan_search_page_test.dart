@@ -314,7 +314,6 @@ final CustomerLookupResult _customer = CustomerLookupResult(
   surname: 'TOLENTINO',
   name: 'MAYRA LIZET',
   birthDate: DateTime.utc(1998, 4, 1),
-  gender: 0,
   street: 'ART 123',
   betweenStreets: '',
   extNum: 'SN',

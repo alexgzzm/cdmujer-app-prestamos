@@ -25,6 +25,7 @@ void main() {
       (json['client'] as Map<String, dynamic>)['birthDate'],
       '1990-05-20T00:00:00.000Z',
     );
+    expect(json['client'] as Map<String, dynamic>, isNot(contains('gender')));
     expect(
       json['client'] as Map<String, dynamic>,
       isNot(contains('client')),
@@ -41,6 +42,10 @@ void main() {
     expect(
       (json['cosigner'] as Map<String, dynamic>)['birthDate'],
       '1990-05-20T00:00:00.000Z',
+    );
+    expect(
+      json['cosigner'] as Map<String, dynamic>,
+      isNot(contains('gender')),
     );
   });
 
@@ -66,7 +71,6 @@ LoanCreationData _sampleLoan() {
     surname: 'Méndez',
     name: 'María',
     birthDate: DateTime.utc(1990, 5, 20),
-    gender: 2,
     street: 'Reforma',
     betweenStreets: 'Juárez y Morelos',
     extNum: '10',

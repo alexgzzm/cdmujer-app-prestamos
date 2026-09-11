@@ -34,7 +34,6 @@ class LoanCreationRequestModel {
         person.birthDate.month,
         person.birthDate.day,
       ).toIso8601String(),
-      'gender': person.gender,
       'street': person.street,
       'betweenStreets': person.betweenStreets,
       'extNum': person.extNum,

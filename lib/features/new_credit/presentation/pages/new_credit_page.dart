@@ -216,6 +216,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
     _clientControllers = _createControllers(_personFields);
     _cosignerControllers = _createControllers(_personFields);
     _creditControllers = _createControllers(_creditFields);
+    _creditControllers['term']!.text = '14';
     final CustomerLookupResult? initialClient = widget.initialClient;
     if (initialClient != null) {
       CustomerFormPopulator.apply(

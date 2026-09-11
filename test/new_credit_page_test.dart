@@ -74,6 +74,13 @@ void main() {
     expect(find.byKey(const Key('proof-attachment-button')), findsOneWidget);
     expect(find.text('Comprobante'), findsOneWidget);
     expect(find.text('Plazo'), findsOneWidget);
+    final TextFormField termField = tester.widget<TextFormField>(
+      find.byWidgetPredicate(
+        (Widget widget) =>
+            widget is TextFormField && widget.decoration?.labelText == 'Plazo',
+      ),
+    );
+    expect(termField.controller!.text, '14');
     expect(find.text('Método de pago'), findsNothing);
   });
 

@@ -5,6 +5,7 @@ import 'package:cdmujer_app_prestamos/features/home/presentation/pages/home_page
 import 'package:cdmujer_app_prestamos/features/loan_search/domain/entities/customer_lookup_result.dart';
 import 'package:cdmujer_app_prestamos/features/loan_search/presentation/pages/loan_search_page.dart';
 import 'package:cdmujer_app_prestamos/features/loans/presentation/pages/loans_page.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/pages/cosigner_search_page.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/pages/new_credit_page.dart';
 import 'package:cdmujer_app_prestamos/features/payments/presentation/pages/payments_page.dart';
 import 'package:go_router/go_router.dart';
@@ -18,7 +19,8 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state, child) {
         return AppScaffold(
           title: _titleForPath(state.uri.path),
-          confirmHomeExit: state.uri.path == '/new-credit',
+          confirmHomeExit: state.uri.path == '/new-credit' ||
+              state.uri.path == '/cosigner-search',
           child: child,
         );
       },
@@ -46,6 +48,10 @@ final GoRouter appRouter = GoRouter(
           ),
         ),
         GoRoute(
+          path: '/cosigner-search',
+          builder: (context, state) => const CosignerSearchPage(),
+        ),
+        GoRoute(
           path: '/reentry',
           builder: (context, state) => const LoanSearchPage(
             applicationType: LoanSearchPage.reentryType,
@@ -71,6 +77,7 @@ String _titleForPath(String path) {
     '/new-credit' => 'Nuevo Crédito',
     '/renewal' => 'Renovación',
     '/reentry' => 'Reingreso',
+    '/cosigner-search' => 'Buscar Aval',
     '/loans' => 'Préstamos',
     '/payments' => 'Pagos',
     _ => 'Inicio',

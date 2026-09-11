@@ -1,3 +1,4 @@
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/pages/cosigner_search_page.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/pages/new_credit_page.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/credit_date_picker.dart';
 import 'package:flutter/material.dart';
@@ -48,6 +49,7 @@ void main() {
     await tester.pump();
     expect(find.text('Datos del aval'), findsOneWidget);
     expect(find.text('Fecha de nacimiento'), findsOneWidget);
+    expect(find.byKey(const Key('search-cosigner-button')), findsOneWidget);
     expect(find.byKey(const Key('proof-attachment-button')), findsNothing);
 
     await tester.tap(find.text('Siguiente'));
@@ -57,6 +59,47 @@ void main() {
     expect(find.text('Comprobante'), findsOneWidget);
     expect(find.text('Plazo'), findsOneWidget);
     expect(find.text('Método de pago'), findsNothing);
+  });
+
+  testWidgets('opens the cosigner search from step two',
+      (WidgetTester tester) async {
+    final GoRouter router = GoRouter(
+      initialLocation: '/new-credit',
+      routes: <RouteBase>[
+        GoRoute(
+          path: '/new-credit',
+          builder: (BuildContext context, GoRouterState state) {
+            return const Scaffold(body: NewCreditPage());
+          },
+        ),
+        GoRoute(
+          path: '/cosigner-search',
+          builder: (BuildContext context, GoRouterState state) {
+            return const Scaffold(body: CosignerSearchPage());
+          },
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      ProviderScope(child: MaterialApp.router(routerConfig: router)),
+    );
+
+    await tester.tap(find.text('Siguiente'));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('search-cosigner-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Buscar aval'), findsOneWidget);
+    expect(find.byType(TextFormField), findsNWidgets(3));
+
+    await tester.tap(
+      find.byKey(const Key('return-to-cosigner-form-button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Datos del aval'), findsOneWidget);
+    expect(find.byKey(const Key('search-cosigner-button')), findsOneWidget);
   });
 
   testWidgets('returns renewal and reentry applications to their search',

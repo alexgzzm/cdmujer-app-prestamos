@@ -22,4 +22,6 @@ abstract final class ApiConfig {
   static final Uri customersByNameEndpoint = Uri.parse(
     'https://localhost:7127/api/Customers/SearchCustomersByName',
   );
+  static final Uri customerByIdEndpoint =
+      Uri.parse('https://localhost:7127/api/Customers/GetById');
 }

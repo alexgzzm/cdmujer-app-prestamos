@@ -207,6 +207,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
   bool _isSaving = false;
   bool _hasLoadedRoutes = false;
   bool _hasLoadedStates = false;
+  int _cosignerId = 0;
   int _currentStep = 0;
 
   @override
@@ -341,7 +342,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
                   additionalButtons: <Widget>[
                     OutlinedButton.icon(
                       key: const Key('search-cosigner-button'),
-                      onPressed: () => context.push('/cosigner-search'),
+                      onPressed: _openCosignerSearch,
                       icon: const Icon(Icons.person_search),
                       label: const Text('Buscar Aval'),
                     ),
@@ -605,7 +606,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
         _clientControllers,
         id: widget.initialClient?.id ?? 0,
       ),
-      cosigner: _personDataFrom(_cosignerControllers, id: 0),
+      cosigner: _personDataFrom(_cosignerControllers, id: _cosignerId),
       date: date,
       ammount: ammount,
       term: term,
@@ -615,6 +616,26 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
       comments: _textValue(_creditControllers, 'comments'),
       attachments: List<int>.unmodifiable(_attachmentIds),
     );
+  }
+
+  Future<void> _openCosignerSearch() async {
+    final CustomerLookupResult? cosigner =
+        await context.push<CustomerLookupResult>('/cosigner-search');
+    if (!mounted || cosigner == null) {
+      return;
+    }
+    setState(() {
+      _cosignerId = cosigner.id;
+      _cosignerCities = <CityOption>[];
+      _cosignerCitiesErrorMessage = null;
+      CustomerFormPopulator.apply(
+        customer: cosigner,
+        controllers: _cosignerControllers,
+      );
+    });
+    if (cosigner.state > 0) {
+      await _loadCosignerCities(stateId: cosigner.state.toString());
+    }
   }
 
   LoanPersonData _personDataFrom(

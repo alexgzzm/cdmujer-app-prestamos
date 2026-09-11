@@ -1,4 +1,5 @@
 import 'package:cdmujer_app_prestamos/features/loan_search/domain/entities/customer_name_match.dart';
+import 'package:cdmujer_app_prestamos/features/loan_search/domain/entities/customer_lookup_result.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/pages/cosigner_search_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,11 +49,12 @@ void main() {
     expect(lookupCalls, 0);
   });
 
-  testWidgets('searches by complete name and marks the selected result',
+  testWidgets('searches by complete name and looks up the selection by id',
       (WidgetTester tester) async {
     String? receivedName;
     String? receivedLastname;
     String? receivedSurname;
+    int? receivedCustomerId;
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
@@ -67,6 +69,10 @@ void main() {
                 receivedLastname = lastname;
                 receivedSurname = surname;
                 return _matches;
+              },
+              lookupCustomerById: ({required int customerId}) async {
+                receivedCustomerId = customerId;
+                return _cosigner;
               },
             ),
           ),
@@ -102,8 +108,7 @@ void main() {
     await tester.tap(find.byKey(const Key('cosigner-match-11')));
     await tester.pump();
 
-    expect(find.byKey(const Key('selected-cosigner-11')), findsOneWidget);
-    expect(find.text('Seleccionado'), findsOneWidget);
+    expect(receivedCustomerId, 11);
   });
 }
 
@@ -117,3 +122,22 @@ const List<CustomerNameMatch> _matches = <CustomerNameMatch>[
     loanGroup: 'GRUPO A',
   ),
 ];
+
+final CustomerLookupResult _cosigner = CustomerLookupResult(
+  id: 11,
+  lastname: 'FLORES ',
+  surname: 'AVIÑA',
+  name: 'TERESA',
+  birthDate: DateTime.utc(1964, 12, 12),
+  street: 'LEONA VICARIO',
+  betweenStreets: '',
+  extNum: 'S/N',
+  intNum: '',
+  suburb: 'CUMUATILLO',
+  city: 103,
+  state: 16,
+  zipCode: '59170',
+  phoneNumber: null,
+  maritalStatus: 0,
+  curp: 'FOAT641212MMNLVR02',
+);

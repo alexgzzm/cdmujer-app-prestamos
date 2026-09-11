@@ -39,4 +39,16 @@ class CustomerLookupRepositoryImpl implements CustomerLookupRepository {
     );
     return response.map((model) => model.toEntity()).toList();
   }
+
+  @override
+  Future<CustomerLookupResult> getById({
+    required int customerId,
+    required String token,
+  }) async {
+    final response = await _dataSource.getById(
+      customerId: customerId,
+      token: token,
+    );
+    return response.toEntity();
+  }
 }

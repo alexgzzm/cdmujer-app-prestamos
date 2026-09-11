@@ -14,4 +14,9 @@ abstract interface class CustomerLookupRepository {
     required String surname,
     required String token,
   });
+
+  Future<CustomerLookupResult> getById({
+    required int customerId,
+    required String token,
+  });
 }

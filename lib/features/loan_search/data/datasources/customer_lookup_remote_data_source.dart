@@ -122,6 +122,54 @@ class CustomerLookupRemoteDataSource {
     }
   }
 
+  Future<CustomerLookupResponseModel> getById({
+    required int customerId,
+    required String token,
+  }) async {
+    try {
+      final Uri endpoint = ApiConfig.customerByIdEndpoint.replace(
+        queryParameters: <String, String>{
+          'idCustomer': customerId.toString(),
+        },
+      );
+      final http.Response response = await _client
+          .get(
+            endpoint,
+            headers: <String, String>{
+              'accept': '*/*',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(const Duration(seconds: 45));
+      final dynamic responseBody = response.body.isEmpty
+          ? null
+          : jsonDecode(response.body);
+      if (response.statusCode != 200) {
+        throw CustomerLookupException(_messageFrom(responseBody));
+      }
+      if (responseBody is! Map<String, dynamic>) {
+        throw const CustomerLookupException(
+          'La respuesta de consulta del aval no es válida.',
+        );
+      }
+      return CustomerLookupResponseModel.fromJson(responseBody);
+    } on CustomerLookupException {
+      rethrow;
+    } on TimeoutException {
+      throw const CustomerLookupException(
+        'El servicio tardó demasiado en consultar al aval.',
+      );
+    } on FormatException {
+      throw const CustomerLookupException(
+        'La respuesta de consulta del aval no es válida.',
+      );
+    } on http.ClientException {
+      throw const CustomerLookupException(
+        'No fue posible conectar con el servicio de clientes.',
+      );
+    }
+  }
+
   String _messageFrom(dynamic responseBody) {
     if (responseBody is Map<String, dynamic>) {
       final dynamic message = responseBody['message'] ??

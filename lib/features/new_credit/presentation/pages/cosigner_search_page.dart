@@ -1,6 +1,7 @@
 import 'package:cdmujer_app_prestamos/features/auth/domain/entities/auth_session.dart';
 import 'package:cdmujer_app_prestamos/features/auth/presentation/providers/auth_providers.dart';
 import 'package:cdmujer_app_prestamos/features/loan_search/domain/entities/customer_name_match.dart';
+import 'package:cdmujer_app_prestamos/features/loan_search/domain/entities/customer_lookup_result.dart';
 import 'package:cdmujer_app_prestamos/features/loan_search/domain/errors/customer_lookup_exception.dart';
 import 'package:cdmujer_app_prestamos/features/loan_search/presentation/providers/customer_lookup_providers.dart';
 import 'package:flutter/material.dart';
@@ -13,13 +14,19 @@ typedef CosignerNameLookupCallback = Future<List<CustomerNameMatch>> Function({
   required String surname,
 });
 
+typedef CosignerByIdLookupCallback = Future<CustomerLookupResult> Function({
+  required int customerId,
+});
+
 class CosignerSearchPage extends ConsumerStatefulWidget {
   const CosignerSearchPage({
     this.lookupCustomersByName,
+    this.lookupCustomerById,
     super.key,
   });
 
   final CosignerNameLookupCallback? lookupCustomersByName;
+  final CosignerByIdLookupCallback? lookupCustomerById;
 
   @override
   ConsumerState<CosignerSearchPage> createState() =>
@@ -33,6 +40,7 @@ class _CosignerSearchPageState extends ConsumerState<CosignerSearchPage> {
   List<CustomerNameMatch> _matches = const <CustomerNameMatch>[];
   CustomerNameMatch? _selectedMatch;
   bool _isSearching = false;
+  bool _isLoadingSelection = false;
 
   @override
   void dispose() {
@@ -123,9 +131,8 @@ class _CosignerSearchPageState extends ConsumerState<CosignerSearchPage> {
                         _CosignerMatches(
                           matches: _matches,
                           selectedMatch: _selectedMatch,
-                          onSelected: (CustomerNameMatch match) {
-                            setState(() => _selectedMatch = match);
-                          },
+                          isLoadingSelection: _isLoadingSelection,
+                          onSelected: _selectCosigner,
                         ),
                       ],
                     ],
@@ -137,6 +144,47 @@ class _CosignerSearchPageState extends ConsumerState<CosignerSearchPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _selectCosigner(CustomerNameMatch match) async {
+    if (_isLoadingSelection) {
+      return;
+    }
+    setState(() {
+      _selectedMatch = match;
+      _isLoadingSelection = true;
+    });
+    try {
+      final CustomerLookupResult customer;
+      if (widget.lookupCustomerById != null) {
+        customer = await widget.lookupCustomerById!(customerId: match.id);
+      } else {
+        final AuthSession session = _requireSession();
+        customer = await ref.read(customerLookupRepositoryProvider).getById(
+              customerId: match.id,
+              token: session.token,
+            );
+      }
+      if (!mounted) {
+        return;
+      }
+      final NavigatorState navigator = Navigator.of(context);
+      if (navigator.canPop()) {
+        navigator.pop(customer);
+      }
+    } on CustomerLookupException catch (error) {
+      if (mounted) {
+        _showMessage(error.message);
+      }
+    } on Object {
+      if (mounted) {
+        _showMessage('No fue posible consultar los datos del aval.');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingSelection = false);
+      }
+    }
   }
 
   Future<void> _search() async {
@@ -293,11 +341,13 @@ class _CosignerMatches extends StatelessWidget {
   const _CosignerMatches({
     required this.matches,
     required this.selectedMatch,
+    required this.isLoadingSelection,
     required this.onSelected,
   });
 
   final List<CustomerNameMatch> matches;
   final CustomerNameMatch? selectedMatch;
+  final bool isLoadingSelection;
   final ValueChanged<CustomerNameMatch> onSelected;
 
   @override
@@ -318,7 +368,7 @@ class _CosignerMatches extends StatelessWidget {
               ? Theme.of(context).colorScheme.secondaryContainer
               : null,
           child: InkWell(
-            onTap: () => onSelected(customer),
+            onTap: isLoadingSelection ? null : () => onSelected(customer),
             borderRadius: BorderRadius.circular(12),
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -327,12 +377,20 @@ class _CosignerMatches extends StatelessWidget {
                 children: <Widget>[
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
-                    child: Icon(
-                      isSelected ? Icons.check_circle : Icons.person_outline,
-                      key: isSelected
-                          ? Key('selected-cosigner-${customer.id}')
-                          : null,
-                    ),
+                    child: isSelected && isLoadingSelection
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Icon(
+                            isSelected
+                                ? Icons.check_circle
+                                : Icons.person_outline,
+                            key: isSelected
+                                ? Key('selected-cosigner-${customer.id}')
+                                : null,
+                          ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -373,7 +431,13 @@ class _CosignerMatches extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text(isSelected ? 'Seleccionado' : 'Seleccionar'),
+                  Text(
+                    isSelected && isLoadingSelection
+                        ? 'Consultando...'
+                        : isSelected
+                            ? 'Seleccionado'
+                            : 'Seleccionar',
+                  ),
                 ],
               ),
             ),

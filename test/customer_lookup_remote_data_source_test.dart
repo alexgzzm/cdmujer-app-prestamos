@@ -57,6 +57,33 @@ void main() {
     expect(response.single.customer.name, 'TERESA FLORES AVIÑA');
     expect(response.single.customer.curp, 'FOAT641212MMNLVR02');
   });
+
+  test('gets the selected cosigner by id and sends the bearer token', () async {
+    final MockClient client = MockClient((http.Request request) async {
+      expect(request.method, 'GET');
+      expect(request.url.path, '/api/Customers/GetById');
+      expect(request.url.queryParameters, <String, String>{
+        'idCustomer': '11',
+      });
+      expect(request.headers['Authorization'], 'Bearer session-token');
+      return http.Response(_cosignerResponseBody, 200);
+    });
+
+    final response =
+        await CustomerLookupRemoteDataSource(client: client).getById(
+      customerId: 11,
+      token: 'session-token',
+    );
+
+    expect(response.customer.id, 11);
+    expect(response.customer.lastname, 'FLORES ');
+    expect(response.customer.surname, 'AVIÑA');
+    expect(response.customer.name, 'TERESA');
+    expect(response.customer.state, 16);
+    expect(response.customer.city, 103);
+    expect(response.customer.phoneNumber, isNull);
+    expect(response.customer.birthDate, DateTime.utc(1964, 12, 12));
+  });
 }
 
 const String _responseBody = '''
@@ -92,4 +119,26 @@ const String _nameSearchResponseBody = '''
     "loanGroup": "GRUPO A"
   }
 ]
+''';
+
+const String _cosignerResponseBody = '''
+{
+  "id": 11,
+  "lastname": "FLORES ",
+  "surname": "AVIÑA",
+  "name": "TERESA",
+  "gender": 0,
+  "street": "LEONA VICARIO",
+  "betweenStreets": "",
+  "extNum": "S/N",
+  "intNum": "",
+  "suburb": "CUMUATILLO",
+  "city": 103,
+  "state": 16,
+  "zipCode": "59170",
+  "phoneNumber": null,
+  "maritalStatus": 0,
+  "curp": "FOAT641212MMNLVR02",
+  "birthDate": "1964-12-12"
+}
 ''';

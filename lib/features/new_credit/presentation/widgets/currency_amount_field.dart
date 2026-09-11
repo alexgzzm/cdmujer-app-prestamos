@@ -5,25 +5,34 @@ class CurrencyAmountField extends StatelessWidget {
   const CurrencyAmountField({
     required this.controller,
     required this.onDecimalChanged,
+    this.label = 'Monto',
+    this.readOnly = false,
+    this.fieldKey,
     super.key,
   });
 
   final TextEditingController controller;
   final ValueChanged<String> onDecimalChanged;
+  final String label;
+  final bool readOnly;
+  final Key? fieldKey;
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      key: const Key('currency-amount-field'),
+      key: fieldKey ?? const Key('currency-amount-field'),
       controller: controller,
+      readOnly: readOnly,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: <TextInputFormatter>[CurrencyInputFormatter()],
-      onChanged: (String value) => onDecimalChanged(normalizeCurrencyInput(value)),
+      onChanged: readOnly
+          ? null
+          : (String value) => onDecimalChanged(normalizeCurrencyInput(value)),
       textInputAction: TextInputAction.next,
-      decoration: const InputDecoration(
-        labelText: 'Monto',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.attach_money),
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        prefixIcon: const Icon(Icons.attach_money),
       ),
     );
   }

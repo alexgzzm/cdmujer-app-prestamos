@@ -156,6 +156,16 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
       keyboardType: TextInputType.numberWithOptions(decimal: true),
     ),
     CreditFieldDefinition(
+      name: 'outstandingAmount',
+      label: 'Monto Adeudado',
+      keyboardType: TextInputType.numberWithOptions(decimal: true),
+    ),
+    CreditFieldDefinition(
+      name: 'amountToDeliver',
+      label: 'Monto a Entregar',
+      keyboardType: TextInputType.numberWithOptions(decimal: true),
+    ),
+    CreditFieldDefinition(
       name: 'term',
       label: 'Plazo',
       keyboardType: TextInputType.number,
@@ -410,6 +420,20 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
                     onDecimalChanged: (String value) {
                       _creditControllers['ammount']!.text = value;
                     },
+                  ),
+                  'outstandingAmount': CurrencyAmountField(
+                    fieldKey: const Key('outstanding-amount-field'),
+                    controller: _creditControllers['outstandingAmount']!,
+                    label: 'Monto Adeudado',
+                    readOnly: true,
+                    onDecimalChanged: (_) {},
+                  ),
+                  'amountToDeliver': CurrencyAmountField(
+                    fieldKey: const Key('amount-to-deliver-field'),
+                    controller: _creditControllers['amountToDeliver']!,
+                    label: 'Monto a Entregar',
+                    readOnly: true,
+                    onDecimalChanged: (_) {},
                   ),
                 },
               ),

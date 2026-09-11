@@ -74,6 +74,24 @@ void main() {
     expect(find.byKey(const Key('proof-attachment-button')), findsOneWidget);
     expect(find.text('Comprobante'), findsOneWidget);
     expect(find.text('Plazo'), findsOneWidget);
+    expect(find.text('Monto Adeudado'), findsOneWidget);
+    expect(find.text('Monto a Entregar'), findsOneWidget);
+    expect(
+      tester
+          .widget<TextFormField>(
+            find.byKey(const Key('outstanding-amount-field')),
+          )
+          .readOnly,
+      isTrue,
+    );
+    expect(
+      tester
+          .widget<TextFormField>(
+            find.byKey(const Key('amount-to-deliver-field')),
+          )
+          .readOnly,
+      isTrue,
+    );
     final TextFormField termField = tester.widget<TextFormField>(
       find.byWidgetPredicate(
         (Widget widget) =>

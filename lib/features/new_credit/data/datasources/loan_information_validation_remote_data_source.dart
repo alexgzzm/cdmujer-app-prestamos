@@ -14,6 +14,7 @@ class LoanInformationValidationRemoteDataSource {
 
   Future<LoanInformationValidationModel> validate({
     required String curp,
+    required int? idCustomer,
     required String token,
   }) async {
     try {
@@ -21,6 +22,7 @@ class LoanInformationValidationRemoteDataSource {
         queryParameters: <String, String>{
           'curp': curp,
           'loanNumber': '',
+          'idCustomer': idCustomer?.toString() ?? '',
         },
       );
       final http.Response response = await _client

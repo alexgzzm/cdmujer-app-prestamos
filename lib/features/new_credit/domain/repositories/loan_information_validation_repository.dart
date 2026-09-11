@@ -3,6 +3,7 @@ import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_i
 abstract interface class LoanInformationValidationRepository {
   Future<LoanInformationValidation> validate({
     required String curp,
+    required int? idCustomer,
     required String token,
   });
 }

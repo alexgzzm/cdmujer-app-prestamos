@@ -676,7 +676,11 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
 
       final LoanInformationValidation validation = await ref
           .read(loanInformationValidationRepositoryProvider)
-          .validate(curp: curp, token: session.token);
+          .validate(
+            curp: curp,
+            idCustomer: null,
+            token: session.token,
+          );
       if (!mounted ||
           _clientControllers['curp']!.text.trim().toUpperCase() != curp) {
         return;

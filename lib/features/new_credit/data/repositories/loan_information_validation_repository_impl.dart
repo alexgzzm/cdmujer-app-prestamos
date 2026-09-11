@@ -13,9 +13,14 @@ class LoanInformationValidationRepositoryImpl
   @override
   Future<LoanInformationValidation> validate({
     required String curp,
+    required int? idCustomer,
     required String token,
   }) async {
-    final result = await _dataSource.validate(curp: curp, token: token);
+    final result = await _dataSource.validate(
+      curp: curp,
+      idCustomer: idCustomer,
+      token: token,
+    );
     return result.toEntity();
   }
 }

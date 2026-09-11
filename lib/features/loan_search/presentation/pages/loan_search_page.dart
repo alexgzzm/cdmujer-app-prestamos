@@ -24,7 +24,7 @@ typedef CustomerNameLookupCallback = Future<List<CustomerNameMatch>> Function({
 });
 
 typedef CustomerValidationCallback = Future<LoanInformationValidation>
-    Function({required String curp});
+    Function({required String curp, required int idCustomer});
 
 class LoanSearchPage extends ConsumerStatefulWidget {
   const LoanSearchPage({
@@ -204,7 +204,10 @@ class _LoanSearchPageState extends ConsumerState<LoanSearchPage> {
       _nameController.text = customer.name;
       _lastnameController.text = customer.lastname;
       _surnameController.text = customer.surname;
-      final bool canContinue = await _validateCustomer(customer.curp);
+      final bool canContinue = await _validateCustomer(
+        curp: customer.curp,
+        idCustomer: customer.id,
+      );
       if (!canContinue || !mounted) {
         return;
       }
@@ -301,12 +304,18 @@ class _LoanSearchPageState extends ConsumerState<LoanSearchPage> {
     return session;
   }
 
-  Future<bool> _validateCustomer(String curp) async {
+  Future<bool> _validateCustomer({
+    required String curp,
+    required int idCustomer,
+  }) async {
     final String normalizedCurp = curp.trim().toUpperCase();
     try {
       final LoanInformationValidation validation;
       if (widget.validateCustomer != null) {
-        validation = await widget.validateCustomer!(curp: normalizedCurp);
+        validation = await widget.validateCustomer!(
+          curp: normalizedCurp,
+          idCustomer: idCustomer,
+        );
       } else {
         final AuthSession? session =
             ref.read(authControllerProvider).whenOrNull(
@@ -319,7 +328,11 @@ class _LoanSearchPageState extends ConsumerState<LoanSearchPage> {
         }
         validation = await ref
             .read(loanInformationValidationRepositoryProvider)
-            .validate(curp: normalizedCurp, token: session.token);
+            .validate(
+              curp: normalizedCurp,
+              idCustomer: idCustomer,
+              token: session.token,
+            );
       }
       if (!mounted || !validation.shouldShowMessage) {
         return mounted;

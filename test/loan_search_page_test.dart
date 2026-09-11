@@ -50,8 +50,12 @@ void main() {
         expect(curp, '');
         return _customer;
       },
-      validateCustomer: ({required String curp}) async {
+      validateCustomer: ({
+        required String curp,
+        required int idCustomer,
+      }) async {
         expect(curp, _customer.curp);
+        expect(idCustomer, _customer.id);
         return _successfulValidation;
       },
     )));
@@ -88,8 +92,12 @@ void main() {
         expect(curp, 'AATM980401MMNLLY05');
         return _customer;
       },
-      validateCustomer: ({required String curp}) async {
+      validateCustomer: ({
+        required String curp,
+        required int idCustomer,
+      }) async {
         expect(curp, _customer.curp);
+        expect(idCustomer, _customer.id);
         return _successfulValidation;
       },
       onCustomerSelected: (CustomerLookupResult customer) {
@@ -167,8 +175,12 @@ void main() {
         expect(curp, _nameMatch.curp);
         return _customer;
       },
-      validateCustomer: ({required String curp}) async {
+      validateCustomer: ({
+        required String curp,
+        required int idCustomer,
+      }) async {
         expect(curp, _customer.curp);
+        expect(idCustomer, _customer.id);
         return _successfulValidation;
       },
       onCustomerSelected: (CustomerLookupResult customer) {
@@ -217,8 +229,12 @@ void main() {
       lookupCustomer: ({required String loanNumber, required String curp}) async {
         return _customer;
       },
-      validateCustomer: ({required String curp}) async {
+      validateCustomer: ({
+        required String curp,
+        required int idCustomer,
+      }) async {
         expect(curp, _customer.curp);
+        expect(idCustomer, _customer.id);
         return const LoanInformationValidation(
           id: 84542,
           status: false,
@@ -249,7 +265,11 @@ void main() {
       lookupCustomer: ({required String loanNumber, required String curp}) async {
         return _customer;
       },
-      validateCustomer: ({required String curp}) async {
+      validateCustomer: ({
+        required String curp,
+        required int idCustomer,
+      }) async {
+        expect(idCustomer, _customer.id);
         return const LoanInformationValidation(
           id: 84542,
           status: false,

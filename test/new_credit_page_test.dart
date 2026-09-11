@@ -50,6 +50,17 @@ void main() {
     expect(find.text('Datos del aval'), findsOneWidget);
     expect(find.text('Fecha de nacimiento'), findsOneWidget);
     expect(find.byKey(const Key('search-cosigner-button')), findsOneWidget);
+    final double searchButtonTop = tester
+        .getTopLeft(find.byKey(const Key('search-cosigner-button')))
+        .dy;
+    final double frontIneButtonTop = tester
+        .getTopLeft(find.widgetWithText(OutlinedButton, 'INE Frontal'))
+        .dy;
+    final double backIneButtonTop = tester
+        .getTopLeft(find.widgetWithText(OutlinedButton, 'INE Reverso'))
+        .dy;
+    expect(searchButtonTop, frontIneButtonTop);
+    expect(searchButtonTop, backIneButtonTop);
     expect(find.byKey(const Key('proof-attachment-button')), findsNothing);
 
     await tester.tap(find.text('Siguiente'));

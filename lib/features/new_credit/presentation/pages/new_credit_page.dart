@@ -342,39 +342,31 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
                     onRetry: _loadCosignerCitiesForSelectedState,
                   ),
                 },
-                leading: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: OutlinedButton.icon(
-                        key: const Key('search-cosigner-button'),
-                        onPressed: () => context.push('/cosigner-search'),
-                        icon: const Icon(Icons.person_search),
-                        label: const Text('Buscar Aval'),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    IdentityAttachmentButtons(
-                      onFrontPressed: () => _captureAndUpload(
-                        slot: _cosignerFrontSlot,
-                        fileType: AttachmentFileType.cosignerIneFront,
-                        extractionTarget: _cosignerControllers,
-                      ),
-                      onBackPressed: () => _captureAndUpload(
-                        slot: _cosignerBackSlot,
-                        fileType: AttachmentFileType.cosignerIneBack,
-                      ),
-                      frontUploading:
-                          _uploadingSlots.contains(_cosignerFrontSlot),
-                      backUploading:
-                          _uploadingSlots.contains(_cosignerBackSlot),
-                      frontUploaded: _attachmentIdsBySlot
-                          .containsKey(_cosignerFrontSlot),
-                      backUploaded:
-                          _attachmentIdsBySlot.containsKey(_cosignerBackSlot),
+                leading: IdentityAttachmentButtons(
+                  additionalButtons: <Widget>[
+                    OutlinedButton.icon(
+                      key: const Key('search-cosigner-button'),
+                      onPressed: () => context.push('/cosigner-search'),
+                      icon: const Icon(Icons.person_search),
+                      label: const Text('Buscar Aval'),
                     ),
                   ],
+                  onFrontPressed: () => _captureAndUpload(
+                    slot: _cosignerFrontSlot,
+                    fileType: AttachmentFileType.cosignerIneFront,
+                    extractionTarget: _cosignerControllers,
+                  ),
+                  onBackPressed: () => _captureAndUpload(
+                    slot: _cosignerBackSlot,
+                    fileType: AttachmentFileType.cosignerIneBack,
+                  ),
+                  frontUploading:
+                      _uploadingSlots.contains(_cosignerFrontSlot),
+                  backUploading: _uploadingSlots.contains(_cosignerBackSlot),
+                  frontUploaded:
+                      _attachmentIdsBySlot.containsKey(_cosignerFrontSlot),
+                  backUploaded:
+                      _attachmentIdsBySlot.containsKey(_cosignerBackSlot),
                 ),
               ),
               _FormStep(

@@ -8,6 +8,7 @@ class IdentityAttachmentButtons extends StatelessWidget {
     required this.backUploading,
     required this.frontUploaded,
     required this.backUploaded,
+    this.additionalButtons = const <Widget>[],
     super.key,
   });
 
@@ -17,6 +18,7 @@ class IdentityAttachmentButtons extends StatelessWidget {
   final bool backUploading;
   final bool frontUploaded;
   final bool backUploaded;
+  final List<Widget> additionalButtons;
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +26,7 @@ class IdentityAttachmentButtons extends StatelessWidget {
       spacing: 12,
       runSpacing: 12,
       children: <Widget>[
+        ...additionalButtons,
         AttachmentButton(
           label: 'INE Frontal',
           uploading: frontUploading,

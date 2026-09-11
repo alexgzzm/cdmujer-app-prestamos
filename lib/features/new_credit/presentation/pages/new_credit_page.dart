@@ -52,12 +52,18 @@ class NewCreditPage extends ConsumerStatefulWidget {
   });
 
   static const int newCreditType = 1;
+  static const int renewalType = 2;
+  static const int reentryType = 3;
 
   final int applicationType;
   final CustomerLookupResult? initialClient;
 
   static bool shouldRunIneOcrFor(int applicationType) {
     return applicationType == newCreditType;
+  }
+
+  static bool canReturnToSearch(int applicationType) {
+    return applicationType == renewalType || applicationType == reentryType;
   }
 
   @override
@@ -252,6 +258,10 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
           currentStep: _currentStep,
           title: _stepTitles[_currentStep],
           stepCount: _stepTitles.length,
+          onReturnToSearch:
+              NewCreditPage.canReturnToSearch(widget.applicationType)
+                  ? _returnToSearch
+                  : null,
         ),
         Expanded(
           child: IndexedStack(
@@ -459,6 +469,17 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
       if (mounted) {
         setState(() => _isLoadingRoutes = false);
       }
+    }
+  }
+
+  void _returnToSearch() {
+    final String? path = switch (widget.applicationType) {
+      NewCreditPage.renewalType => '/renewal',
+      NewCreditPage.reentryType => '/reentry',
+      _ => null,
+    };
+    if (path != null) {
+      context.go(path);
     }
   }
 
@@ -1136,11 +1157,13 @@ class _WizardHeader extends StatelessWidget {
     required this.currentStep,
     required this.title,
     required this.stepCount,
+    this.onReturnToSearch,
   });
 
   final int currentStep;
   final String title;
   final int stepCount;
+  final VoidCallback? onReturnToSearch;
 
   @override
   Widget build(BuildContext context) {
@@ -1152,6 +1175,18 @@ class _WizardHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
+              if (onReturnToSearch != null) ...<Widget>[
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    key: const Key('return-to-search-button'),
+                    onPressed: onReturnToSearch,
+                    icon: const Icon(Icons.arrow_back),
+                    label: const Text('Regresar a la búsqueda'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
               Text(title, style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 12),
               LinearProgressIndicator(value: (currentStep + 1) / stepCount),

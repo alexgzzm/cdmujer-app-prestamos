@@ -9,6 +9,17 @@ void main() {
     expect(parseCreditDate('31/02/2026'), isNull);
   });
 
+  test('calculates the latest birth date allowed for an adult', () {
+    expect(
+      latestAdultBirthDate(DateTime.utc(2026, 9, 10)),
+      DateTime.utc(2008, 9, 10),
+    );
+    expect(
+      latestAdultBirthDate(DateTime.utc(2024, 2, 29)),
+      DateTime.utc(2006, 2, 28),
+    );
+  });
+
   testWidgets('writes the selected date in dd/MM/yyyy format',
       (WidgetTester tester) async {
     final TextEditingController controller = TextEditingController();
@@ -33,6 +44,39 @@ void main() {
 
     expect(controller.text, '05/09/2026');
     expect(find.text('05/09/2026'), findsOneWidget);
+  });
+
+  testWidgets('starts an empty birth date calendar at the adult limit',
+      (WidgetTester tester) async {
+    final TextEditingController controller = TextEditingController();
+    addTearDown(controller.dispose);
+    final DateTime adultLimit = DateTime.utc(2008, 9, 10);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CreditDatePicker(
+            controller: controller,
+            label: 'Fecha de nacimiento',
+            firstDate: DateTime.utc(1900),
+            lastDate: adultLimit,
+            pickDate: (BuildContext context, DateTime initialDate) async {
+              expect(initialDate, adultLimit);
+              return null;
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(
+      find.byKey(
+        const Key('credit-date-picker-Fecha de nacimiento'),
+      ),
+    );
+    await tester.pump();
+
+    expect(controller.text, isEmpty);
   });
 
   testWidgets('shows the calendar in Spanish', (WidgetTester tester) async {

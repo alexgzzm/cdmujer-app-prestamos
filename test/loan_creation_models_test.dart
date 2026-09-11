@@ -22,6 +22,10 @@ void main() {
     expect(json['attachments'], <int>[11, 12]);
     expect((json['client'] as Map<String, dynamic>)['id'], 84542);
     expect(
+      (json['client'] as Map<String, dynamic>)['birthDate'],
+      '1990-05-20T00:00:00.000Z',
+    );
+    expect(
       json['client'] as Map<String, dynamic>,
       isNot(contains('client')),
     );
@@ -34,6 +38,10 @@ void main() {
       isNot(contains('ine')),
     );
     expect((json['cosigner'] as Map<String, dynamic>)['city'], 19001);
+    expect(
+      (json['cosigner'] as Map<String, dynamic>)['birthDate'],
+      '1990-05-20T00:00:00.000Z',
+    );
   });
 
   test('maps the generated loan number from a successful response', () {
@@ -52,11 +60,12 @@ void main() {
 }
 
 LoanCreationData _sampleLoan() {
-  const LoanPersonData person = LoanPersonData(
+  final LoanPersonData person = LoanPersonData(
     id: 84542,
     lastname: 'García',
     surname: 'Méndez',
     name: 'María',
+    birthDate: DateTime.utc(1990, 5, 20),
     gender: 2,
     street: 'Reforma',
     betweenStreets: 'Juárez y Morelos',

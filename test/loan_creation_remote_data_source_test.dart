@@ -37,11 +37,12 @@ void main() {
 }
 
 LoanCreationData _sampleLoan() {
-  const LoanPersonData person = LoanPersonData(
+  final LoanPersonData person = LoanPersonData(
     id: 0,
     lastname: 'García',
     surname: 'Méndez',
     name: 'María',
+    birthDate: DateTime.utc(1990, 5, 20),
     gender: 2,
     street: 'Reforma',
     betweenStreets: '',

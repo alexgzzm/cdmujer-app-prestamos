@@ -29,6 +29,11 @@ class LoanCreationRequestModel {
       'lastname': person.lastname,
       'surname': person.surname,
       'name': person.name,
+      'birthDate': DateTime.utc(
+        person.birthDate.year,
+        person.birthDate.month,
+        person.birthDate.day,
+      ).toIso8601String(),
       'gender': person.gender,
       'street': person.street,
       'betweenStreets': person.betweenStreets,

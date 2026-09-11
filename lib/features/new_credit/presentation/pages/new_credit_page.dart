@@ -89,6 +89,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
     CreditFieldDefinition(name: 'lastname', label: 'Apellido paterno'),
     CreditFieldDefinition(name: 'surname', label: 'Apellido materno'),
     CreditFieldDefinition(name: 'name', label: 'Nombre'),
+    CreditFieldDefinition(name: 'birthDate', label: 'Fecha de nacimiento'),
     CreditFieldDefinition(
       name: 'gender',
       label: 'Género',
@@ -271,6 +272,12 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
                 fields: _personFields,
                 controllers: _clientControllers,
                 fieldOverrides: <String, Widget>{
+                  'birthDate': CreditDatePicker(
+                    controller: _clientControllers['birthDate']!,
+                    label: 'Fecha de nacimiento',
+                    firstDate: DateTime.utc(1900),
+                    lastDate: latestAdultBirthDate(DateTime.now()),
+                  ),
                   'state': StateDropdown(
                     controller: _clientControllers['state']!,
                     states: _states,
@@ -311,6 +318,12 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
                 fields: _personFields,
                 controllers: _cosignerControllers,
                 fieldOverrides: <String, Widget>{
+                  'birthDate': CreditDatePicker(
+                    controller: _cosignerControllers['birthDate']!,
+                    label: 'Fecha de nacimiento',
+                    firstDate: DateTime.utc(1900),
+                    lastDate: latestAdultBirthDate(DateTime.now()),
+                  ),
                   'state': StateDropdown(
                     controller: _cosignerControllers['state']!,
                     states: _states,
@@ -606,11 +619,24 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
     Map<String, TextEditingController> controllers, {
     required int id,
   }) {
+    final DateTime? birthDate =
+        parseCreditDate(_textValue(controllers, 'birthDate'));
+    if (birthDate == null) {
+      throw const LoanCreationException(
+        'Selecciona una fecha de nacimiento válida.',
+      );
+    }
+    if (birthDate.isAfter(latestAdultBirthDate(DateTime.now()))) {
+      throw const LoanCreationException(
+        'El cliente y el aval deben ser mayores de edad.',
+      );
+    }
     return LoanPersonData(
       id: id,
       lastname: _textValue(controllers, 'lastname'),
       surname: _textValue(controllers, 'surname'),
       name: _textValue(controllers, 'name'),
+      birthDate: birthDate,
       gender: _intValue(controllers, 'gender'),
       street: _textValue(controllers, 'street'),
       betweenStreets: _textValue(controllers, 'betweenStreets'),

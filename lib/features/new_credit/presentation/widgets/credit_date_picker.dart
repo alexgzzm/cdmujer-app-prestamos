@@ -10,12 +10,16 @@ class CreditDatePicker extends StatelessWidget {
     required this.controller,
     required this.label,
     this.pickDate,
+    this.firstDate,
+    this.lastDate,
     super.key,
   });
 
   final TextEditingController controller;
   final String label;
   final CreditDatePickerCallback? pickDate;
+  final DateTime? firstDate;
+  final DateTime? lastDate;
 
   @override
   Widget build(BuildContext context) {
@@ -33,20 +37,50 @@ class CreditDatePicker extends StatelessWidget {
   }
 
   Future<void> _selectDate(BuildContext context) async {
-    final DateTime initialDate =
-        parseCreditDate(controller.text) ?? DateTime.now();
+    final DateTime minimumDate = firstDate ?? DateTime(2000);
+    final DateTime maximumDate = lastDate ?? DateTime(2100);
+    final DateTime initialDate = _dateWithinRange(
+      parseCreditDate(controller.text) ?? DateTime.now(),
+      minimumDate,
+      maximumDate,
+    );
     final DateTime? selectedDate = await (pickDate?.call(context, initialDate) ??
         showDatePicker(
           context: context,
           initialDate: initialDate,
-          firstDate: DateTime(2000),
-          lastDate: DateTime(2100),
+          firstDate: minimumDate,
+          lastDate: maximumDate,
           locale: const Locale('es', 'MX'),
         ));
     if (selectedDate != null) {
       controller.text = formatCreditDate(selectedDate);
     }
   }
+}
+
+DateTime latestAdultBirthDate(DateTime currentDate) {
+  final int eligibleYear = currentDate.year - 18;
+  final int lastDayOfMonth =
+      DateTime.utc(eligibleYear, currentDate.month + 1, 0).day;
+  return DateTime.utc(
+    eligibleYear,
+    currentDate.month,
+    currentDate.day.clamp(1, lastDayOfMonth).toInt(),
+  );
+}
+
+DateTime _dateWithinRange(
+  DateTime date,
+  DateTime minimumDate,
+  DateTime maximumDate,
+) {
+  if (date.isBefore(minimumDate)) {
+    return minimumDate;
+  }
+  if (date.isAfter(maximumDate)) {
+    return maximumDate;
+  }
+  return date;
 }
 
 String formatCreditDate(DateTime date) {

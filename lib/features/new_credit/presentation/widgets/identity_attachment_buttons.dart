@@ -24,13 +24,13 @@ class IdentityAttachmentButtons extends StatelessWidget {
       spacing: 12,
       runSpacing: 12,
       children: <Widget>[
-        _AttachmentButton(
+        AttachmentButton(
           label: 'INE Frontal',
           uploading: frontUploading,
           uploaded: frontUploaded,
           onPressed: onFrontPressed,
         ),
-        _AttachmentButton(
+        AttachmentButton(
           label: 'INE Reverso',
           uploading: backUploading,
           uploaded: backUploaded,
@@ -41,12 +41,13 @@ class IdentityAttachmentButtons extends StatelessWidget {
   }
 }
 
-class _AttachmentButton extends StatelessWidget {
-  const _AttachmentButton({
+class AttachmentButton extends StatelessWidget {
+  const AttachmentButton({
     required this.label,
     required this.uploading,
     required this.uploaded,
     required this.onPressed,
+    super.key,
   });
 
   final String label;

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:cdmujer_app_prestamos/features/auth/domain/entities/auth_session.dart';
 import 'package:cdmujer_app_prestamos/features/auth/presentation/providers/auth_providers.dart';
 import 'package:cdmujer_app_prestamos/features/loan_search/domain/entities/customer_lookup_result.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/attachment_file_type.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/attachment_upload_result.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/city_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/ine_extracted_data.dart';
@@ -75,8 +76,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
   static const String _clientBackSlot = 'client-back';
   static const String _cosignerFrontSlot = 'cosigner-front';
   static const String _cosignerBackSlot = 'cosigner-back';
-  static const int _ineFrontFileType = 1;
-  static const int _ineBackFileType = 2;
+  static const String _proofSlot = 'proof';
 
   static const List<String> _stepTitles = <String>[
     'Datos del cliente',
@@ -292,12 +292,12 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
                 leading: IdentityAttachmentButtons(
                   onFrontPressed: () => _captureAndUpload(
                     slot: _clientFrontSlot,
-                    fileType: _ineFrontFileType,
+                    fileType: AttachmentFileType.clientIneFront,
                     extractionTarget: _clientControllers,
                   ),
                   onBackPressed: () => _captureAndUpload(
                     slot: _clientBackSlot,
-                    fileType: _ineBackFileType,
+                    fileType: AttachmentFileType.clientIneBack,
                   ),
                   frontUploading: _uploadingSlots.contains(_clientFrontSlot),
                   backUploading: _uploadingSlots.contains(_clientBackSlot),
@@ -332,12 +332,12 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
                 leading: IdentityAttachmentButtons(
                   onFrontPressed: () => _captureAndUpload(
                     slot: _cosignerFrontSlot,
-                    fileType: _ineFrontFileType,
+                    fileType: AttachmentFileType.cosignerIneFront,
                     extractionTarget: _cosignerControllers,
                   ),
                   onBackPressed: () => _captureAndUpload(
                     slot: _cosignerBackSlot,
-                    fileType: _ineBackFileType,
+                    fileType: AttachmentFileType.cosignerIneBack,
                   ),
                   frontUploading:
                       _uploadingSlots.contains(_cosignerFrontSlot),
@@ -352,6 +352,16 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
               _FormStep(
                 fields: _creditFields,
                 controllers: _creditControllers,
+                leading: AttachmentButton(
+                  key: const Key('proof-attachment-button'),
+                  label: 'Comprobante',
+                  uploading: _uploadingSlots.contains(_proofSlot),
+                  uploaded: _attachmentIdsBySlot.containsKey(_proofSlot),
+                  onPressed: () => _captureAndUpload(
+                    slot: _proofSlot,
+                    fileType: AttachmentFileType.proof,
+                  ),
+                ),
                 fieldOverrides: <String, Widget>{
                   'idRoute': LoanRouteDropdown(
                     controller: _creditControllers['idRoute']!,

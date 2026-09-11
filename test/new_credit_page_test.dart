@@ -25,6 +25,7 @@ void main() {
     expect(find.text('Datos del cliente'), findsOneWidget);
     expect(find.text('INE Frontal'), findsOneWidget);
     expect(find.text('INE Reverso'), findsOneWidget);
+    expect(find.byKey(const Key('proof-attachment-button')), findsNothing);
     final NewCreditPage page = tester.widget<NewCreditPage>(
       find.byType(NewCreditPage),
     );
@@ -34,10 +35,13 @@ void main() {
     await tester.tap(find.text('Siguiente'));
     await tester.pump();
     expect(find.text('Datos del aval'), findsOneWidget);
+    expect(find.byKey(const Key('proof-attachment-button')), findsNothing);
 
     await tester.tap(find.text('Siguiente'));
     await tester.pump();
     expect(find.text('Información del crédito'), findsOneWidget);
+    expect(find.byKey(const Key('proof-attachment-button')), findsOneWidget);
+    expect(find.text('Comprobante'), findsOneWidget);
     expect(find.text('Plazo'), findsOneWidget);
     expect(find.text('Método de pago'), findsNothing);
   });

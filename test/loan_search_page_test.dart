@@ -41,7 +41,7 @@ void main() {
     );
   });
 
-  testWidgets('keeps search values when the customer is cancelled',
+  testWidgets('keeps exact search criteria when the customer is cancelled',
       (WidgetTester tester) async {
     await tester.pumpWidget(_testApp(LoanSearchPage(
       applicationType: LoanSearchPage.renewalType,
@@ -76,9 +76,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(_textOf(tester, 'loan-number-field'), '15');
-    expect(_textOf(tester, 'loan-name-field'), _customer.name);
-    expect(_textOf(tester, 'loan-lastname-field'), _customer.lastname);
-    expect(_textOf(tester, 'loan-surname-field'), _customer.surname);
+    expect(_textOf(tester, 'loan-name-field'), isEmpty);
+    expect(_textOf(tester, 'loan-lastname-field'), isEmpty);
+    expect(_textOf(tester, 'loan-surname-field'), isEmpty);
     expect(find.byType(LoanSearchPage), findsOneWidget);
   });
 
@@ -121,6 +121,9 @@ void main() {
       find.byType(LoanSearchPage),
     );
     expect(page.applicationType, 3);
+    expect(_textOf(tester, 'loan-name-field'), isEmpty);
+    expect(_textOf(tester, 'loan-lastname-field'), isEmpty);
+    expect(_textOf(tester, 'loan-surname-field'), isEmpty);
   });
 
   testWidgets('requires all three name fields for a name search',

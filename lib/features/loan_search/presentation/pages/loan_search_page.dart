@@ -201,9 +201,6 @@ class _LoanSearchPageState extends ConsumerState<LoanSearchPage> {
         return;
       }
 
-      _nameController.text = customer.name;
-      _lastnameController.text = customer.lastname;
-      _surnameController.text = customer.surname;
       final bool canContinue = await _validateCustomer(
         curp: customer.curp,
         idCustomer: customer.id,

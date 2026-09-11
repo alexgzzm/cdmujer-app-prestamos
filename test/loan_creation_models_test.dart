@@ -23,7 +23,7 @@ void main() {
     expect((json['client'] as Map<String, dynamic>)['id'], 84542);
     expect(
       (json['client'] as Map<String, dynamic>)['birthDate'],
-      '1990-05-20T00:00:00.000Z',
+      '1990-05-20',
     );
     expect(json['client'] as Map<String, dynamic>, isNot(contains('gender')));
     expect(
@@ -41,7 +41,7 @@ void main() {
     expect((json['cosigner'] as Map<String, dynamic>)['city'], 19001);
     expect(
       (json['cosigner'] as Map<String, dynamic>)['birthDate'],
-      '1990-05-20T00:00:00.000Z',
+      '1990-05-20',
     );
     expect(
       json['cosigner'] as Map<String, dynamic>,

@@ -29,11 +29,7 @@ class LoanCreationRequestModel {
       'lastname': person.lastname,
       'surname': person.surname,
       'name': person.name,
-      'birthDate': DateTime.utc(
-        person.birthDate.year,
-        person.birthDate.month,
-        person.birthDate.day,
-      ).toIso8601String(),
+      'birthDate': _formatBirthDate(person.birthDate),
       'street': person.street,
       'betweenStreets': person.betweenStreets,
       'extNum': person.extNum,
@@ -46,5 +42,11 @@ class LoanCreationRequestModel {
       'maritalStatus': person.maritalStatus,
       'curp': person.curp,
     };
+  }
+
+  String _formatBirthDate(DateTime birthDate) {
+    final String month = birthDate.month.toString().padLeft(2, '0');
+    final String day = birthDate.day.toString().padLeft(2, '0');
+    return '${birthDate.year}-$month-$day';
   }
 }

@@ -19,6 +19,8 @@ void main() {
     expect(json, isNot(contains('globalInterest')));
     expect(json, isNot(contains('iva')));
     expect(json, isNot(contains('insurance')));
+    expect(json, isNot(contains('outstandingAmount')));
+    expect(json, isNot(contains('amountToDeliver')));
     expect(json['attachments'], <int>[11, 12]);
     expect((json['client'] as Map<String, dynamic>)['id'], 84542);
     expect(

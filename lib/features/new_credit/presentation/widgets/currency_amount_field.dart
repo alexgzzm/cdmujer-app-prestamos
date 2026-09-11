@@ -75,3 +75,9 @@ String formatCurrencyInput(String value) {
   );
   return parts.length == 2 ? '$formattedIntegerPart.${parts[1]}' : formattedIntegerPart;
 }
+
+String formatCurrencyAmount(double value) {
+  final double roundedValue = (value * 100).round() / 100;
+  final double normalizedValue = roundedValue == 0 ? 0 : roundedValue;
+  return formatCurrencyInput(normalizedValue.toStringAsFixed(2));
+}

@@ -16,6 +16,7 @@ import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/state_
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/attachment_upload_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/cities_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/ine_extraction_exception.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/loan_balance_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/loan_creation_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/loan_information_validation_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/groups_exception.dart';
@@ -23,6 +24,7 @@ import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/routes_e
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/states_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/attachment_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/city_providers.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_balance_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_creation_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_group_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_information_validation_providers.dart';
@@ -45,10 +47,15 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+typedef LoanBalanceLookupCallback = Future<double> Function({
+  required int customerId,
+});
+
 class NewCreditPage extends ConsumerStatefulWidget {
   const NewCreditPage({
     this.applicationType = newCreditType,
     this.initialClient,
+    this.lookupLoanBalance,
     super.key,
   });
 
@@ -58,6 +65,7 @@ class NewCreditPage extends ConsumerStatefulWidget {
 
   final int applicationType;
   final CustomerLookupResult? initialClient;
+  final LoanBalanceLookupCallback? lookupLoanBalance;
 
   static bool shouldRunIneOcrFor(int applicationType) {
     return applicationType == newCreditType;
@@ -65,6 +73,10 @@ class NewCreditPage extends ConsumerStatefulWidget {
 
   static bool canReturnToSearch(int applicationType) {
     return applicationType == renewalType || applicationType == reentryType;
+  }
+
+  static bool shouldLoadLoanBalanceFor(int applicationType) {
+    return applicationType == renewalType;
   }
 
   @override
@@ -217,6 +229,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
   bool _isSaving = false;
   bool _hasLoadedRoutes = false;
   bool _hasLoadedStates = false;
+  double? _outstandingAmount;
   int _cosignerId = 0;
   int _currentStep = 0;
 
@@ -236,10 +249,22 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
     }
     _clientControllers['curp']!.addListener(_onClientCurpChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await _loadStates();
+      final List<Future<void>> initialRequests = <Future<void>>[
+        _loadStates(),
+      ];
       if (initialClient != null && initialClient.state > 0 && mounted) {
-        await _loadClientCities(stateId: initialClient.state.toString());
+        initialRequests.add(
+          _loadClientCities(stateId: initialClient.state.toString()),
+        );
       }
+      if (initialClient != null &&
+          initialClient.id > 0 &&
+          NewCreditPage.shouldLoadLoanBalanceFor(widget.applicationType)) {
+        initialRequests.add(
+          _loadOutstandingAmount(customerId: initialClient.id),
+        );
+      }
+      await Future.wait(initialRequests);
     });
   }
 
@@ -419,6 +444,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
                     controller: _amountDisplayController,
                     onDecimalChanged: (String value) {
                       _creditControllers['ammount']!.text = value;
+                      _updateAmountToDeliver(value);
                     },
                   ),
                   'outstandingAmount': CurrencyAmountField(
@@ -661,6 +687,56 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
     if (cosigner.state > 0) {
       await _loadCosignerCities(stateId: cosigner.state.toString());
     }
+  }
+
+  Future<void> _loadOutstandingAmount({required int customerId}) async {
+    try {
+      final double amount;
+      if (widget.lookupLoanBalance != null) {
+        amount = await widget.lookupLoanBalance!(customerId: customerId);
+      } else {
+        final AuthSession? session = ref.read(authControllerProvider).whenOrNull(
+              data: (AuthSession? value) => value,
+            );
+        if (session == null) {
+          throw const LoanBalanceException(
+            'La sesión no está disponible. Inicia sesión nuevamente.',
+          );
+        }
+        amount = (await ref.read(loanBalanceRepositoryProvider).getBalance(
+                  customerId: customerId,
+                  token: session.token,
+                ))
+            .amount;
+      }
+      if (!mounted) {
+        return;
+      }
+      _outstandingAmount = amount;
+      _creditControllers['outstandingAmount']!.text =
+          formatCurrencyAmount(amount);
+      _updateAmountToDeliver(_creditControllers['ammount']!.text);
+    } on LoanBalanceException catch (error) {
+      if (mounted) {
+        _showMessage(error.message);
+      }
+    } on Object {
+      if (mounted) {
+        _showMessage('No fue posible consultar el saldo del cliente.');
+      }
+    }
+  }
+
+  void _updateAmountToDeliver(String rawLoanAmount) {
+    final double? outstandingAmount = _outstandingAmount;
+    final double? loanAmount =
+        double.tryParse(normalizeCurrencyInput(rawLoanAmount));
+    if (outstandingAmount == null || loanAmount == null) {
+      _creditControllers['amountToDeliver']!.clear();
+      return;
+    }
+    _creditControllers['amountToDeliver']!.text =
+        formatCurrencyAmount(loanAmount - outstandingAmount);
   }
 
   LoanPersonData _personDataFrom(

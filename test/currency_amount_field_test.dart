@@ -7,6 +7,8 @@ void main() {
     expect(formatCurrencyInput('1234567.89'), '1,234,567.89');
     expect(normalizeCurrencyInput('1,234,567.89'), '1234567.89');
     expect(normalizeCurrencyInput('.50'), '0.50');
+    expect(formatCurrencyAmount(3749.5), '3,749.50');
+    expect(formatCurrencyAmount(-250.5), '-250.50');
   });
 
   testWidgets('shows currency formatting and reports a decimal amount',

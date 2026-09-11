@@ -10,13 +10,25 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 void main() {
-  test('runs INE OCR only for a new credit application', () {
+  test('selects API behavior by application type', () {
     expect(
       NewCreditPage.shouldRunIneOcrFor(NewCreditPage.newCreditType),
       isTrue,
     );
     expect(NewCreditPage.shouldRunIneOcrFor(2), isFalse);
     expect(NewCreditPage.shouldRunIneOcrFor(3), isFalse);
+    expect(
+      NewCreditPage.shouldLoadLoanBalanceFor(NewCreditPage.renewalType),
+      isTrue,
+    );
+    expect(
+      NewCreditPage.shouldLoadLoanBalanceFor(NewCreditPage.newCreditType),
+      isFalse,
+    );
+    expect(
+      NewCreditPage.shouldLoadLoanBalanceFor(NewCreditPage.reentryType),
+      isFalse,
+    );
   });
 
   testWidgets('moves through the new credit wizard',
@@ -205,6 +217,52 @@ void main() {
       tester.widget<CityDropdown>(find.byType(CityDropdown)).controller.text,
       '103',
     );
+  });
+
+  testWidgets('loads renewal balance and calculates the amount to deliver',
+      (WidgetTester tester) async {
+    int? receivedCustomerId;
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: NewCreditPage(
+              applicationType: NewCreditPage.renewalType,
+              initialClient: _selectedCosigner,
+              lookupLoanBalance: ({required int customerId}) async {
+                receivedCustomerId = customerId;
+                return 1250.50;
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(receivedCustomerId, 11);
+    await tester.tap(find.text('Siguiente'));
+    await tester.pump();
+    await tester.tap(find.text('Siguiente'));
+    await tester.pump();
+
+    final TextFormField outstandingAmountField = tester.widget<TextFormField>(
+      find.byKey(const Key('outstanding-amount-field')),
+    );
+    expect(outstandingAmountField.controller!.text, '1,250.50');
+
+    await tester.enterText(
+      find.byKey(const Key('currency-amount-field')),
+      '5000',
+    );
+    await tester.pump();
+
+    final TextFormField amountToDeliverField = tester.widget<TextFormField>(
+      find.byKey(const Key('amount-to-deliver-field')),
+    );
+    expect(amountToDeliverField.controller!.text, '3,749.50');
+    expect(outstandingAmountField.readOnly, isTrue);
+    expect(amountToDeliverField.readOnly, isTrue);
   });
 
   testWidgets('returns renewal and reentry applications to their search',

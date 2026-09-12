@@ -12,6 +12,7 @@ import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_c
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_group_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_information_validation.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_route_option.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/relationship_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/state_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/attachment_upload_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/cities_exception.dart';
@@ -21,6 +22,7 @@ import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/loan_cre
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/loan_information_validation_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/groups_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/routes_exception.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/relationships_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/states_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/attachment_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/city_providers.dart';
@@ -29,6 +31,7 @@ import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_group_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_information_validation_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_route_providers.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/relationship_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/state_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/utils/customer_form_populator.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/utils/ine_form_populator.dart';
@@ -38,6 +41,7 @@ import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/c
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/identity_attachment_buttons.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/loan_group_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/loan_route_dropdown.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/relationship_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/responsive_form_fields.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/save_credit_button.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/state_dropdown.dart';
@@ -51,11 +55,14 @@ typedef LoanBalanceLookupCallback = Future<double> Function({
   required int customerId,
 });
 
+typedef RelationshipLookupCallback = Future<List<RelationshipOption>> Function();
+
 class NewCreditPage extends ConsumerStatefulWidget {
   const NewCreditPage({
     this.applicationType = newCreditType,
     this.initialClient,
     this.lookupLoanBalance,
+    this.lookupRelationships,
     super.key,
   });
 
@@ -66,6 +73,7 @@ class NewCreditPage extends ConsumerStatefulWidget {
   final int applicationType;
   final CustomerLookupResult? initialClient;
   final LoanBalanceLookupCallback? lookupLoanBalance;
+  final RelationshipLookupCallback? lookupRelationships;
 
   static bool shouldRunIneOcrFor(int applicationType) {
     return applicationType == newCreditType;
@@ -213,6 +221,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
   final Set<String> _uploadingSlots = <String>{};
   List<LoanGroupOption> _groups = <LoanGroupOption>[];
   List<LoanRouteOption> _routes = <LoanRouteOption>[];
+  List<RelationshipOption> _relationships = <RelationshipOption>[];
   List<StateOption> _states = <StateOption>[];
   List<CityOption> _clientCities = <CityOption>[];
   List<CityOption> _cosignerCities = <CityOption>[];
@@ -220,14 +229,17 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
   String? _cosignerCitiesErrorMessage;
   String? _groupsErrorMessage;
   String? _routesErrorMessage;
+  String? _relationshipsErrorMessage;
   String? _statesErrorMessage;
   bool _isLoadingGroups = false;
   bool _isLoadingRoutes = false;
+  bool _isLoadingRelationships = false;
   bool _isLoadingStates = false;
   bool _isLoadingClientCities = false;
   bool _isLoadingCosignerCities = false;
   bool _isSaving = false;
   bool _hasLoadedRoutes = false;
+  bool _hasLoadedRelationships = false;
   bool _hasLoadedStates = false;
   double? _outstandingAmount;
   int _cosignerId = 0;
@@ -461,6 +473,13 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
                     readOnly: true,
                     onDecimalChanged: (_) {},
                   ),
+                  'relationship': RelationshipDropdown(
+                    controller: _creditControllers['relationship']!,
+                    relationships: _relationships,
+                    isLoading: _isLoadingRelationships,
+                    errorMessage: _relationshipsErrorMessage,
+                    onRetry: () => _loadRelationships(force: true),
+                  ),
                 },
               ),
             ],
@@ -492,6 +511,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
       setState(() => _currentStep++);
       if (_currentStep == _stepTitles.length - 1) {
         _loadRoutes();
+        _loadRelationships();
       }
     }
   }
@@ -545,6 +565,58 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
     } finally {
       if (mounted) {
         setState(() => _isLoadingRoutes = false);
+      }
+    }
+  }
+
+  Future<void> _loadRelationships({bool force = false}) async {
+    if (_isLoadingRelationships || (!force && _hasLoadedRelationships)) {
+      return;
+    }
+
+    setState(() {
+      _isLoadingRelationships = true;
+      _relationshipsErrorMessage = null;
+    });
+    try {
+      final List<RelationshipOption> relationships;
+      if (widget.lookupRelationships != null) {
+        relationships = await widget.lookupRelationships!();
+      } else {
+        final AuthSession? session = ref.read(authControllerProvider).whenOrNull(
+              data: (AuthSession? value) => value,
+            );
+        if (session == null) {
+          throw const RelationshipsException(
+            'La sesión no está disponible. Inicia sesión nuevamente.',
+          );
+        }
+        relationships =
+            await ref.read(relationshipRepositoryProvider).getRelationships(
+                  token: session.token,
+                );
+      }
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _relationships = relationships;
+        _hasLoadedRelationships = true;
+      });
+    } on RelationshipsException catch (error) {
+      if (mounted) {
+        setState(() => _relationshipsErrorMessage = error.message);
+      }
+    } on Object {
+      if (mounted) {
+        setState(() {
+          _relationshipsErrorMessage =
+              'No fue posible cargar los parentescos.';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingRelationships = false);
       }
     }
   }

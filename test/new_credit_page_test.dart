@@ -1,8 +1,10 @@
 import 'package:cdmujer_app_prestamos/features/loan_search/domain/entities/customer_lookup_result.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/relationship_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/pages/cosigner_search_page.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/pages/new_credit_page.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/city_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/credit_date_picker.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/relationship_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/state_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,8 +36,14 @@ void main() {
   testWidgets('moves through the new credit wizard',
       (WidgetTester tester) async {
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(home: Scaffold(body: NewCreditPage())),
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: NewCreditPage(
+              lookupRelationships: _lookupRelationships,
+            ),
+          ),
+        ),
       ),
     );
 
@@ -81,11 +89,13 @@ void main() {
     expect(find.byKey(const Key('proof-attachment-button')), findsNothing);
 
     await tester.tap(find.text('Siguiente'));
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.text('Información del crédito'), findsOneWidget);
     expect(find.byKey(const Key('proof-attachment-button')), findsOneWidget);
     expect(find.text('Comprobante'), findsOneWidget);
     expect(find.text('Plazo'), findsOneWidget);
+    expect(find.byType(RelationshipDropdown), findsOneWidget);
+    expect(find.text('Esposo (a)'), findsOneWidget);
     expect(find.text('Monto Adeudado'), findsOneWidget);
     expect(find.text('Monto a Entregar'), findsOneWidget);
     expect(
@@ -280,6 +290,13 @@ void main() {
       destinationLabel: 'Búsqueda de reingreso',
     );
   });
+}
+
+Future<List<RelationshipOption>> _lookupRelationships() async {
+  return const <RelationshipOption>[
+    RelationshipOption(value: '1', description: 'Esposo (a)'),
+    RelationshipOption(value: '4', description: 'Hijo (a)'),
+  ];
 }
 
 final CustomerLookupResult _selectedCosigner = CustomerLookupResult(

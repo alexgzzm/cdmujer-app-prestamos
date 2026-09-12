@@ -16,6 +16,7 @@ void main() {
     expect(json['term'], 14);
     expect(json['date'], '2026-09-09T00:00:00.000Z');
     expect(json['firstPaymentDate'], '2026-10-09T00:00:00.000Z');
+    expect(json['relationship'], '4');
     expect(json, isNot(contains('paymentMethod')));
     expect(json, isNot(contains('globalInterest')));
     expect(json, isNot(contains('iva')));
@@ -107,7 +108,7 @@ LoanCreationData _sampleLoan({int type = 1}) {
     term: 14,
     firstPaymentDate: DateTime.utc(2026, 10, 9),
     beneficiary: 'Beneficiario',
-    relationship: 'Hijo',
+    relationship: '4',
     comments: 'Sin comentarios',
     attachments: const <int>[11, 12],
   );

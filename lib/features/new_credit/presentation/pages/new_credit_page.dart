@@ -87,6 +87,10 @@ class NewCreditPage extends ConsumerStatefulWidget {
     return applicationType == renewalType;
   }
 
+  static bool shouldShowRenewalAmountsFor(int applicationType) {
+    return applicationType == renewalType;
+  }
+
   @override
   ConsumerState<NewCreditPage> createState() => _NewCreditPageState();
 }
@@ -212,6 +216,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
   late final Map<String, TextEditingController> _clientControllers;
   late final Map<String, TextEditingController> _cosignerControllers;
   late final Map<String, TextEditingController> _creditControllers;
+  late final List<CreditFieldDefinition> _visibleCreditFields;
   final TextEditingController _amountDisplayController = TextEditingController();
   final ImagePicker _imagePicker = ImagePicker();
   Timer? _clientCurpValidationTimer;
@@ -251,6 +256,17 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
     _clientControllers = _createControllers(_personFields);
     _cosignerControllers = _createControllers(_personFields);
     _creditControllers = _createControllers(_creditFields);
+    _visibleCreditFields = NewCreditPage.shouldShowRenewalAmountsFor(
+      widget.applicationType,
+    )
+        ? _creditFields
+        : _creditFields
+            .where(
+              (CreditFieldDefinition field) =>
+                  field.name != 'outstandingAmount' &&
+                  field.name != 'amountToDeliver',
+            )
+            .toList(growable: false);
     _creditControllers['term']!.text = '14';
     final CustomerLookupResult? initialClient = widget.initialClient;
     if (initialClient != null) {
@@ -414,7 +430,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
                 ),
               ),
               _FormStep(
-                fields: _creditFields,
+                fields: _visibleCreditFields,
                 controllers: _creditControllers,
                 leading: AttachmentButton(
                   key: const Key('proof-attachment-button'),
@@ -763,6 +779,9 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
   }
 
   Future<void> _loadOutstandingAmount({required int customerId}) async {
+    if (!NewCreditPage.shouldLoadLoanBalanceFor(widget.applicationType)) {
+      return;
+    }
     try {
       final double amount;
       if (widget.lookupLoanBalance != null) {

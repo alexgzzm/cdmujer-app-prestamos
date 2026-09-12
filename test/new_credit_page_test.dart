@@ -31,6 +31,18 @@ void main() {
       NewCreditPage.shouldLoadLoanBalanceFor(NewCreditPage.reentryType),
       isFalse,
     );
+    expect(
+      NewCreditPage.shouldShowRenewalAmountsFor(NewCreditPage.renewalType),
+      isTrue,
+    );
+    expect(
+      NewCreditPage.shouldShowRenewalAmountsFor(NewCreditPage.newCreditType),
+      isFalse,
+    );
+    expect(
+      NewCreditPage.shouldShowRenewalAmountsFor(NewCreditPage.reentryType),
+      isFalse,
+    );
   });
 
   testWidgets('moves through the new credit wizard',
@@ -96,24 +108,10 @@ void main() {
     expect(find.text('Plazo'), findsOneWidget);
     expect(find.byType(RelationshipDropdown), findsOneWidget);
     expect(find.text('Esposo (a)'), findsOneWidget);
-    expect(find.text('Monto Adeudado'), findsOneWidget);
-    expect(find.text('Monto a Entregar'), findsOneWidget);
-    expect(
-      tester
-          .widget<TextFormField>(
-            find.byKey(const Key('outstanding-amount-field')),
-          )
-          .readOnly,
-      isTrue,
-    );
-    expect(
-      tester
-          .widget<TextFormField>(
-            find.byKey(const Key('amount-to-deliver-field')),
-          )
-          .readOnly,
-      isTrue,
-    );
+    expect(find.text('Monto Adeudado'), findsNothing);
+    expect(find.text('Monto a Entregar'), findsNothing);
+    expect(find.byKey(const Key('outstanding-amount-field')), findsNothing);
+    expect(find.byKey(const Key('amount-to-deliver-field')), findsNothing);
     final TextFormField termField = tester.widget<TextFormField>(
       find.byWidgetPredicate(
         (Widget widget) =>
@@ -273,6 +271,38 @@ void main() {
     expect(amountToDeliverField.controller!.text, '3,749.50');
     expect(outstandingAmountField.readOnly, isTrue);
     expect(amountToDeliverField.readOnly, isTrue);
+  });
+
+  testWidgets('does not load or show renewal amounts for a reentry',
+      (WidgetTester tester) async {
+    int balanceRequestCount = 0;
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: NewCreditPage(
+              applicationType: NewCreditPage.reentryType,
+              initialClient: _selectedCosigner,
+              lookupLoanBalance: ({required int customerId}) async {
+                balanceRequestCount++;
+                return 1250.50;
+              },
+              lookupRelationships: _lookupRelationships,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(balanceRequestCount, 0);
+    await tester.tap(find.text('Siguiente'));
+    await tester.pump();
+    await tester.tap(find.text('Siguiente'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('outstanding-amount-field')), findsNothing);
+    expect(find.byKey(const Key('amount-to-deliver-field')), findsNothing);
   });
 
   testWidgets('returns renewal and reentry applications to their search',

@@ -105,7 +105,9 @@ void main() {
     expect(find.text('Ruta: RUTA 1'), findsOneWidget);
     expect(find.text('Grupo: GRUPO A'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('cosigner-match-11')));
+    final Finder matchCard = find.byKey(const Key('cosigner-match-11'));
+    await tester.ensureVisible(matchCard);
+    await tester.tap(matchCard);
     await tester.pump();
 
     expect(receivedCustomerId, 11);

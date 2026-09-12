@@ -45,7 +45,8 @@ void main() {
       (WidgetTester tester) async {
     await tester.pumpWidget(_testApp(LoanSearchPage(
       applicationType: LoanSearchPage.renewalType,
-      lookupCustomer: ({required String loanNumber, required String curp}) async {
+      lookupCustomer: (
+          {required String loanNumber, required String curp}) async {
         expect(loanNumber, '15');
         expect(curp, '');
         return _customer;
@@ -87,7 +88,8 @@ void main() {
     CustomerLookupResult? selectedCustomer;
     await tester.pumpWidget(_testApp(LoanSearchPage(
       applicationType: LoanSearchPage.reentryType,
-      lookupCustomer: ({required String loanNumber, required String curp}) async {
+      lookupCustomer: (
+          {required String loanNumber, required String curp}) async {
         expect(loanNumber, '');
         expect(curp, 'AATM980401MMNLLY05');
         return _customer;
@@ -173,7 +175,8 @@ void main() {
         expect(surname, 'AVIÑA');
         return const <CustomerNameMatch>[_nameMatch];
       },
-      lookupCustomer: ({required String loanNumber, required String curp}) async {
+      lookupCustomer: (
+          {required String loanNumber, required String curp}) async {
         expect(loanNumber, '');
         expect(curp, _nameMatch.curp);
         return _customer;
@@ -229,7 +232,8 @@ void main() {
     CustomerLookupResult? selectedCustomer;
     await tester.pumpWidget(_testApp(LoanSearchPage(
       applicationType: LoanSearchPage.renewalType,
-      lookupCustomer: ({required String loanNumber, required String curp}) async {
+      lookupCustomer: (
+          {required String loanNumber, required String curp}) async {
         return _customer;
       },
       validateCustomer: ({
@@ -265,7 +269,8 @@ void main() {
       (WidgetTester tester) async {
     await tester.pumpWidget(_testApp(LoanSearchPage(
       applicationType: LoanSearchPage.reentryType,
-      lookupCustomer: ({required String loanNumber, required String curp}) async {
+      lookupCustomer: (
+          {required String loanNumber, required String curp}) async {
         return _customer;
       },
       validateCustomer: ({
@@ -289,7 +294,8 @@ void main() {
 
     expect(find.text('Advertencia'), findsOneWidget);
     await tester.tap(find.text('Aceptar'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Cliente encontrado'), findsOneWidget);
   });
@@ -302,10 +308,7 @@ Widget _testApp(LoanSearchPage page) {
 }
 
 String _textOf(WidgetTester tester, String key) {
-  return tester
-      .widget<TextFormField>(find.byKey(Key(key)))
-      .controller!
-      .text;
+  return tester.widget<TextFormField>(find.byKey(Key(key))).controller!.text;
 }
 
 final CustomerLookupResult _customer = CustomerLookupResult(

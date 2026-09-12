@@ -64,9 +64,7 @@ void main() {
     expect(find.text('Género'), findsNothing);
     final CreditDatePicker clientBirthDatePicker =
         tester.widget<CreditDatePicker>(
-      find.byKey(
-        const Key('credit-date-picker-Fecha de nacimiento'),
-      ),
+      find.byType(CreditDatePicker),
     );
     expect(
       clientBirthDatePicker.lastDate,
@@ -87,9 +85,8 @@ void main() {
     expect(find.text('Fecha de nacimiento'), findsOneWidget);
     expect(find.text('Género'), findsNothing);
     expect(find.byKey(const Key('search-cosigner-button')), findsOneWidget);
-    final double searchButtonTop = tester
-        .getTopLeft(find.byKey(const Key('search-cosigner-button')))
-        .dy;
+    final double searchButtonTop =
+        tester.getTopLeft(find.byKey(const Key('search-cosigner-button'))).dy;
     final double frontIneButtonTop = tester
         .getTopLeft(find.widgetWithText(OutlinedButton, 'INE Frontal'))
         .dy;
@@ -107,16 +104,19 @@ void main() {
     expect(find.text('Comprobante'), findsOneWidget);
     expect(find.text('Plazo'), findsOneWidget);
     expect(find.byType(RelationshipDropdown), findsOneWidget);
-    expect(find.text('Esposo (a)'), findsOneWidget);
+    final RelationshipDropdown relationshipDropdown =
+        tester.widget<RelationshipDropdown>(find.byType(RelationshipDropdown));
+    expect(
+      relationshipDropdown.relationships
+          .map((RelationshipOption option) => option.description),
+      contains('Esposo (a)'),
+    );
     expect(find.text('Monto Adeudado'), findsNothing);
     expect(find.text('Monto a Entregar'), findsNothing);
     expect(find.byKey(const Key('outstanding-amount-field')), findsNothing);
     expect(find.byKey(const Key('amount-to-deliver-field')), findsNothing);
     final TextFormField termField = tester.widget<TextFormField>(
-      find.byWidgetPredicate(
-        (Widget widget) =>
-            widget is TextFormField && widget.decoration?.labelText == 'Plazo',
-      ),
+      find.widgetWithText(TextFormField, 'Plazo'),
     );
     expect(termField.controller!.text, '14');
     expect(find.text('Método de pago'), findsNothing);
@@ -205,18 +205,20 @@ void main() {
         .widgetList<TextFormField>(find.byType(TextFormField))
         .map((TextFormField field) => field.controller?.text ?? '')
         .toList();
-    expect(fieldValues, containsAll(<String>[
-      'FLORES ',
-      'AVIÑA',
-      'TERESA',
-      '12/12/1964',
-      'LEONA VICARIO',
-      'S/N',
-      'CUMUATILLO',
-      '59170',
-      '0',
-      'FOAT641212MMNLVR02',
-    ]));
+    expect(
+        fieldValues,
+        containsAll(<String>[
+          'FLORES ',
+          'AVIÑA',
+          'TERESA',
+          '12/12/1964',
+          'LEONA VICARIO',
+          'S/N',
+          'CUMUATILLO',
+          '59170',
+          '0',
+          'FOAT641212MMNLVR02',
+        ]));
     expect(
       tester.widget<StateDropdown>(find.byType(StateDropdown)).controller.text,
       '16',
@@ -269,8 +271,14 @@ void main() {
       find.byKey(const Key('amount-to-deliver-field')),
     );
     expect(amountToDeliverField.controller!.text, '3,749.50');
-    expect(outstandingAmountField.readOnly, isTrue);
-    expect(amountToDeliverField.readOnly, isTrue);
+    expect(
+      _textFieldOf(tester, 'outstanding-amount-field').readOnly,
+      isTrue,
+    );
+    expect(
+      _textFieldOf(tester, 'amount-to-deliver-field').readOnly,
+      isTrue,
+    );
   });
 
   testWidgets('does not load or show renewal amounts for a reentry',
@@ -360,13 +368,15 @@ Future<void> _expectReturnToSearch({
       GoRoute(
         path: '/new-credit',
         builder: (BuildContext context, GoRouterState state) {
-          return NewCreditPage(applicationType: applicationType);
+          return Scaffold(
+            body: NewCreditPage(applicationType: applicationType),
+          );
         },
       ),
       GoRoute(
         path: searchPath,
         builder: (BuildContext context, GoRouterState state) {
-          return Text(destinationLabel);
+          return Scaffold(body: Text(destinationLabel));
         },
       ),
     ],
@@ -381,4 +391,13 @@ Future<void> _expectReturnToSearch({
 
   expect(find.text(destinationLabel), findsOneWidget);
   router.dispose();
+}
+
+TextField _textFieldOf(WidgetTester tester, String key) {
+  return tester.widget<TextField>(
+    find.descendant(
+      of: find.byKey(Key(key)),
+      matching: find.byType(TextField),
+    ),
+  );
 }

@@ -8,6 +8,7 @@ class LoanCreationRequestModel {
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'id': 0,
+      'type': data.type,
       'idRoute': data.idRoute,
       'idGroup': data.idGroup,
       'client': _personToJson(data.client),

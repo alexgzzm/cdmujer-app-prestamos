@@ -38,6 +38,7 @@ class LoanPersonData {
 
 class LoanCreationData {
   const LoanCreationData({
+    required this.type,
     required this.idRoute,
     required this.idGroup,
     required this.client,
@@ -52,6 +53,7 @@ class LoanCreationData {
     required this.attachments,
   });
 
+  final int type;
   final int idRoute;
   final int idGroup;
   final LoanPersonData client;

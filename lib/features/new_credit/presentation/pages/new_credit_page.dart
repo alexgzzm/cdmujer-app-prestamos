@@ -651,6 +651,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
     );
 
     return LoanCreationData(
+      type: widget.applicationType,
       idRoute: idRoute,
       idGroup: idGroup,
       client: _personDataFrom(

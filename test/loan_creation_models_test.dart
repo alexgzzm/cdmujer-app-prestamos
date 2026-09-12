@@ -9,6 +9,7 @@ void main() {
         LoanCreationRequestModel(_sampleLoan()).toJson();
 
     expect(json['id'], 0);
+    expect(json['type'], 1);
     expect(json['idRoute'], 122);
     expect(json['idGroup'], 1302);
     expect(json['ammount'], 12500.50);
@@ -64,9 +65,19 @@ void main() {
     expect(result.id, 20763);
     expect(result.status, isTrue);
   });
+
+  test('serializes each loan application type as an integer', () {
+    for (final int type in <int>[1, 2, 3]) {
+      final Map<String, dynamic> json =
+          LoanCreationRequestModel(_sampleLoan(type: type)).toJson();
+
+      expect(json['type'], type);
+      expect(json['type'], isA<int>());
+    }
+  });
 }
 
-LoanCreationData _sampleLoan() {
+LoanCreationData _sampleLoan({int type = 1}) {
   final LoanPersonData person = LoanPersonData(
     id: 84542,
     lastname: 'García',
@@ -86,6 +97,7 @@ LoanCreationData _sampleLoan() {
     curp: 'GAMG700626MMNLRL04',
   );
   return LoanCreationData(
+    type: type,
     idRoute: 122,
     idGroup: 1302,
     client: person,

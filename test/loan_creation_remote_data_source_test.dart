@@ -15,6 +15,7 @@ void main() {
       expect(request.headers['Content-Type'], contains('application/json'));
       final Map<String, dynamic> body =
           jsonDecode(request.body) as Map<String, dynamic>;
+      expect(body['type'], 1);
       expect(body['idRoute'], 122);
       expect(body['term'], 14);
       expect(
@@ -64,6 +65,7 @@ LoanCreationData _sampleLoan() {
     curp: 'GAMG700626MMNLRL04',
   );
   return LoanCreationData(
+    type: 1,
     idRoute: 122,
     idGroup: 1302,
     client: person,

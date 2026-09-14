@@ -33,14 +33,33 @@ lib/
 ## Ejecutar el proyecto
 
 1. Instala una versión estable reciente de [Flutter](https://docs.flutter.dev/get-started/install) y verifica que `flutter` esté disponible en tu terminal.
-2. Desde la raíz del proyecto, ejecuta:
+2. Desde la raíz del proyecto, ejecuta en ambiente de desarrollo:
 
    ```bash
    flutter pub get
-   flutter run
+   flutter run --dart-define=APP_ENV=dev
    ```
 
-3. Para revisar la calidad estática del código:
+   `dev` usa `https://localhost:7127` y es el ambiente predeterminado, por lo
+   que `flutter run` conserva el mismo comportamiento.
+
+3. Para ejecutar la aplicación contra el ambiente de QA:
+
+   ```bash
+   flutter run --dart-define=APP_ENV=qa
+   ```
+
+   QA usa
+   `https://cdmujer-api-dsfugwdqb2efdjf2.westus3-01.azurewebsites.net`.
+
+4. Para generar un APK de cualquiera de los ambientes:
+
+   ```bash
+   flutter build apk --release --dart-define=APP_ENV=dev
+   flutter build apk --release --dart-define=APP_ENV=qa
+   ```
+
+5. Para revisar la calidad estática del código:
 
    ```bash
    flutter analyze

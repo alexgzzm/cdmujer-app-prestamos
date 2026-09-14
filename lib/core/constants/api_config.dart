@@ -14,6 +14,8 @@ abstract final class ApiConfig {
       Uri.parse('https://localhost:7127/api/Locations/GetCities');
   static final Uri relationshipsEndpoint =
       Uri.parse('https://localhost:7127/api/Catalogs/GetRelationships');
+  static final Uri maritalStatusesEndpoint =
+      Uri.parse('https://localhost:7127/api/Catalogs/GetMaritalStatus');
   static final Uri validateLoanInformationEndpoint =
       Uri.parse('https://localhost:7127/api/Loans/ValidateInformation');
   static final Uri loansEndpoint =

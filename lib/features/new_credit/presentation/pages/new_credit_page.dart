@@ -12,6 +12,7 @@ import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_c
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_group_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_information_validation.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_route_option.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/marital_status_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/relationship_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/state_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/attachment_upload_exception.dart';
@@ -21,6 +22,7 @@ import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/loan_bal
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/loan_creation_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/loan_information_validation_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/groups_exception.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/marital_statuses_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/routes_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/relationships_exception.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/states_exception.dart';
@@ -31,6 +33,7 @@ import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_group_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_information_validation_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/loan_route_providers.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/marital_status_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/relationship_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/providers/state_providers.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/utils/customer_form_populator.dart';
@@ -41,6 +44,7 @@ import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/c
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/identity_attachment_buttons.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/loan_group_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/loan_route_dropdown.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/marital_status_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/relationship_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/responsive_form_fields.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/save_credit_button.dart';
@@ -57,12 +61,16 @@ typedef LoanBalanceLookupCallback = Future<double> Function({
 
 typedef RelationshipLookupCallback = Future<List<RelationshipOption>> Function();
 
+typedef MaritalStatusLookupCallback = Future<List<MaritalStatusOption>>
+    Function();
+
 class NewCreditPage extends ConsumerStatefulWidget {
   const NewCreditPage({
     this.applicationType = newCreditType,
     this.initialClient,
     this.lookupLoanBalance,
     this.lookupRelationships,
+    this.lookupMaritalStatuses,
     super.key,
   });
 
@@ -74,6 +82,7 @@ class NewCreditPage extends ConsumerStatefulWidget {
   final CustomerLookupResult? initialClient;
   final LoanBalanceLookupCallback? lookupLoanBalance;
   final RelationshipLookupCallback? lookupRelationships;
+  final MaritalStatusLookupCallback? lookupMaritalStatuses;
 
   static bool shouldRunIneOcrFor(int applicationType) {
     return applicationType == newCreditType;
@@ -227,6 +236,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
   List<LoanGroupOption> _groups = <LoanGroupOption>[];
   List<LoanRouteOption> _routes = <LoanRouteOption>[];
   List<RelationshipOption> _relationships = <RelationshipOption>[];
+  List<MaritalStatusOption> _maritalStatuses = <MaritalStatusOption>[];
   List<StateOption> _states = <StateOption>[];
   List<CityOption> _clientCities = <CityOption>[];
   List<CityOption> _cosignerCities = <CityOption>[];
@@ -235,16 +245,19 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
   String? _groupsErrorMessage;
   String? _routesErrorMessage;
   String? _relationshipsErrorMessage;
+  String? _maritalStatusesErrorMessage;
   String? _statesErrorMessage;
   bool _isLoadingGroups = false;
   bool _isLoadingRoutes = false;
   bool _isLoadingRelationships = false;
+  bool _isLoadingMaritalStatuses = false;
   bool _isLoadingStates = false;
   bool _isLoadingClientCities = false;
   bool _isLoadingCosignerCities = false;
   bool _isSaving = false;
   bool _hasLoadedRoutes = false;
   bool _hasLoadedRelationships = false;
+  bool _hasLoadedMaritalStatuses = false;
   bool _hasLoadedStates = false;
   double? _outstandingAmount;
   int _cosignerId = 0;
@@ -279,6 +292,7 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final List<Future<void>> initialRequests = <Future<void>>[
         _loadStates(),
+        _loadMaritalStatuses(),
       ];
       if (initialClient != null && initialClient.state > 0 && mounted) {
         initialRequests.add(
@@ -355,6 +369,13 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
                         _clientControllers['state']!.text.isNotEmpty,
                     onRetry: _loadClientCitiesForSelectedState,
                   ),
+                  'maritalStatus': MaritalStatusDropdown(
+                    controller: _clientControllers['maritalStatus']!,
+                    maritalStatuses: _maritalStatuses,
+                    isLoading: _isLoadingMaritalStatuses,
+                    errorMessage: _maritalStatusesErrorMessage,
+                    onRetry: () => _loadMaritalStatuses(force: true),
+                  ),
                 },
                 leading: IdentityAttachmentButtons(
                   onFrontPressed: () => _captureAndUpload(
@@ -400,6 +421,13 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
                     isStateSelected:
                         _cosignerControllers['state']!.text.isNotEmpty,
                     onRetry: _loadCosignerCitiesForSelectedState,
+                  ),
+                  'maritalStatus': MaritalStatusDropdown(
+                    controller: _cosignerControllers['maritalStatus']!,
+                    maritalStatuses: _maritalStatuses,
+                    isLoading: _isLoadingMaritalStatuses,
+                    errorMessage: _maritalStatusesErrorMessage,
+                    onRetry: () => _loadMaritalStatuses(force: true),
                   ),
                 },
                 leading: IdentityAttachmentButtons(
@@ -633,6 +661,57 @@ class _NewCreditPageState extends ConsumerState<NewCreditPage> {
     } finally {
       if (mounted) {
         setState(() => _isLoadingRelationships = false);
+      }
+    }
+  }
+
+  Future<void> _loadMaritalStatuses({bool force = false}) async {
+    if (_isLoadingMaritalStatuses || (!force && _hasLoadedMaritalStatuses)) {
+      return;
+    }
+
+    setState(() {
+      _isLoadingMaritalStatuses = true;
+      _maritalStatusesErrorMessage = null;
+    });
+    try {
+      final List<MaritalStatusOption> maritalStatuses;
+      if (widget.lookupMaritalStatuses != null) {
+        maritalStatuses = await widget.lookupMaritalStatuses!();
+      } else {
+        final AuthSession? session = ref.read(authControllerProvider).whenOrNull(
+              data: (AuthSession? value) => value,
+            );
+        if (session == null) {
+          throw const MaritalStatusesException(
+            'La sesión no está disponible. Inicia sesión nuevamente.',
+          );
+        }
+        maritalStatuses = await ref
+            .read(maritalStatusRepositoryProvider)
+            .getMaritalStatuses(token: session.token);
+      }
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _maritalStatuses = maritalStatuses;
+        _hasLoadedMaritalStatuses = true;
+      });
+    } on MaritalStatusesException catch (error) {
+      if (mounted) {
+        setState(() => _maritalStatusesErrorMessage = error.message);
+      }
+    } on Object {
+      if (mounted) {
+        setState(() {
+          _maritalStatusesErrorMessage =
+              'No fue posible cargar los estados civiles.';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingMaritalStatuses = false);
       }
     }
   }

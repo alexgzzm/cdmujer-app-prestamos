@@ -1,9 +1,11 @@
 import 'package:cdmujer_app_prestamos/features/loan_search/domain/entities/customer_lookup_result.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/marital_status_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/relationship_option.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/pages/cosigner_search_page.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/pages/new_credit_page.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/city_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/credit_date_picker.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/marital_status_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/relationship_dropdown.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/presentation/widgets/state_dropdown.dart';
 import 'package:flutter/material.dart';
@@ -53,15 +55,27 @@ void main() {
           home: Scaffold(
             body: NewCreditPage(
               lookupRelationships: _lookupRelationships,
+              lookupMaritalStatuses: _lookupMaritalStatuses,
             ),
           ),
         ),
       ),
     );
+    await tester.pumpAndSettle();
 
     expect(find.text('Datos del cliente'), findsOneWidget);
     expect(find.text('Fecha de nacimiento'), findsOneWidget);
     expect(find.text('Género'), findsNothing);
+    expect(find.byType(MaritalStatusDropdown), findsOneWidget);
+    final MaritalStatusDropdown clientMaritalStatusDropdown =
+        tester.widget<MaritalStatusDropdown>(
+      find.byType(MaritalStatusDropdown),
+    );
+    expect(
+      clientMaritalStatusDropdown.maritalStatuses
+          .map((MaritalStatusOption option) => option.description),
+      contains('Casado (a)'),
+    );
     final CreditDatePicker clientBirthDatePicker =
         tester.widget<CreditDatePicker>(
       find.byType(CreditDatePicker),
@@ -84,6 +98,7 @@ void main() {
     expect(find.text('Datos del aval'), findsOneWidget);
     expect(find.text('Fecha de nacimiento'), findsOneWidget);
     expect(find.text('Género'), findsNothing);
+    expect(find.byType(MaritalStatusDropdown), findsOneWidget);
     expect(find.byKey(const Key('search-cosigner-button')), findsOneWidget);
     final double searchButtonTop =
         tester.getTopLeft(find.byKey(const Key('search-cosigner-button'))).dy;
@@ -216,9 +231,17 @@ void main() {
           'S/N',
           'CUMUATILLO',
           '59170',
-          '0',
           'FOAT641212MMNLVR02',
         ]));
+    expect(
+      tester
+          .widget<MaritalStatusDropdown>(
+            find.byType(MaritalStatusDropdown),
+          )
+          .controller
+          .text,
+      '0',
+    );
     expect(
       tester.widget<StateDropdown>(find.byType(StateDropdown)).controller.text,
       '16',
@@ -334,6 +357,13 @@ Future<List<RelationshipOption>> _lookupRelationships() async {
   return const <RelationshipOption>[
     RelationshipOption(value: '1', description: 'Esposo (a)'),
     RelationshipOption(value: '4', description: 'Hijo (a)'),
+  ];
+}
+
+Future<List<MaritalStatusOption>> _lookupMaritalStatuses() async {
+  return const <MaritalStatusOption>[
+    MaritalStatusOption(value: '1', description: 'Soltero (a)'),
+    MaritalStatusOption(value: '2', description: 'Casado (a)'),
   ];
 }
 

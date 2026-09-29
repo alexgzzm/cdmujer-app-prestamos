@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:cdmujer_app_prestamos/features/new_credit/data/datasources/loan_creation_remote_data_source.dart';
 import 'package:cdmujer_app_prestamos/features/new_credit/domain/entities/loan_creation.dart';
+import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/loan_creation_exception.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -43,6 +44,27 @@ void main() {
 
     expect(response.id, 20763);
   });
+
+  for (final String responseBody in <String>['not-json', '[]', '{}']) {
+    test('shows a server error for an invalid loan response: $responseBody',
+        () async {
+      final LoanCreationRemoteDataSource dataSource =
+          LoanCreationRemoteDataSource(
+        client: MockClient(
+          (http.Request request) async => http.Response(responseBody, 200),
+        ),
+      );
+
+      await expectLater(
+        dataSource.create(data: _sampleLoan(), token: 'session-token'),
+        throwsA(isA<LoanCreationException>().having(
+          (LoanCreationException error) => error.message,
+          'message',
+          'Ocurrio un error en el servidor, favor de intentar más tarde',
+        )),
+      );
+    });
+  }
 }
 
 LoanCreationData _sampleLoan() {

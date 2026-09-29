@@ -20,7 +20,7 @@ class LoanCreationResponseModel {
         (rawId != null && id == null) ||
         (rawStatus == true && id == null)) {
       throw const FormatException(
-        'La respuesta de creación del crédito no es válida.',
+        'Ocurrio un error en el servidor, favor de intentar más tarde',
       );
     }
     return LoanCreationResponseModel(

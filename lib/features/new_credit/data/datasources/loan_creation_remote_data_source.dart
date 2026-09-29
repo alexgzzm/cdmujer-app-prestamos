@@ -9,7 +9,8 @@ import 'package:cdmujer_app_prestamos/features/new_credit/domain/errors/loan_cre
 import 'package:http/http.dart' as http;
 
 class LoanCreationRemoteDataSource {
-  LoanCreationRemoteDataSource({required http.Client client}) : _client = client;
+  LoanCreationRemoteDataSource({required http.Client client})
+      : _client = client;
 
   final http.Client _client;
 
@@ -29,15 +30,14 @@ class LoanCreationRemoteDataSource {
             body: jsonEncode(LoanCreationRequestModel(data).toJson()),
           )
           .timeout(const Duration(seconds: 45));
-      final dynamic responseBody = response.body.isEmpty
-          ? null
-          : jsonDecode(response.body);
+      final dynamic responseBody =
+          response.body.isEmpty ? null : jsonDecode(response.body);
       if (response.statusCode < 200 || response.statusCode >= 300) {
         throw LoanCreationException(_messageFrom(responseBody));
       }
       if (responseBody is! Map<String, dynamic>) {
         throw const LoanCreationException(
-          'La respuesta de creación del crédito no es válida.',
+          'Ocurrio un error en el servidor, favor de intentar más tarde',
         );
       }
       return LoanCreationResponseModel.fromJson(responseBody);
@@ -49,7 +49,7 @@ class LoanCreationRemoteDataSource {
       );
     } on FormatException {
       throw const LoanCreationException(
-        'La respuesta de creación del crédito no es válida.',
+        'Ocurrio un error en el servidor, favor de intentar más tarde',
       );
     } on http.ClientException {
       throw const LoanCreationException(

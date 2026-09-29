@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:cdmujer_app_prestamos/features/auth/data/models/auth_session_model.dart';
 import 'package:cdmujer_app_prestamos/features/auth/domain/entities/auth_session.dart';
+import 'package:cdmujer_app_prestamos/features/auth/domain/errors/session_expired_exception.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SessionLocalDataSource {
@@ -10,11 +11,16 @@ class SessionLocalDataSource {
 
   static const String _tokenKey = 'auth_token';
   static const String _userKey = 'auth_user';
+  static const String _createdAtKey = 'auth_created_at';
 
   final FlutterSecureStorage _storage;
 
   Future<void> save(AuthSession session) async {
     await _storage.write(key: _tokenKey, value: session.token);
+    await _storage.write(
+      key: _createdAtKey,
+      value: session.createdAt.toUtc().toIso8601String(),
+    );
     await _storage.write(
       key: _userKey,
       value: jsonEncode(<String, dynamic>{
@@ -30,19 +36,29 @@ class SessionLocalDataSource {
     final List<String?> values = await Future.wait<String?>(<Future<String?>>[
       _storage.read(key: _tokenKey),
       _storage.read(key: _userKey),
+      _storage.read(key: _createdAtKey),
     ]);
     final String? token = values[0];
     final String? encodedUser = values[1];
+    final String? encodedCreatedAt = values[2];
 
     if (token == null || encodedUser == null) {
       return null;
+    }
+
+    final DateTime? createdAt = encodedCreatedAt == null
+        ? null
+        : DateTime.tryParse(encodedCreatedAt)?.toUtc();
+    if (createdAt == null) {
+      await clear();
+      throw const SessionExpiredException();
     }
 
     try {
       return AuthSessionModel.fromJson(<String, dynamic>{
         'token': token,
         'userInfo': jsonDecode(encodedUser),
-      });
+      }, createdAt: createdAt);
     } on FormatException {
       return null;
     } on TypeError {
@@ -54,6 +70,7 @@ class SessionLocalDataSource {
     await Future.wait<void>(<Future<void>>[
       _storage.delete(key: _tokenKey),
       _storage.delete(key: _userKey),
+      _storage.delete(key: _createdAtKey),
     ]);
   }
 }
